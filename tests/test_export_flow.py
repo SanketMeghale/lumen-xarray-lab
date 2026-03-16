@@ -2,9 +2,13 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import imageio.v2 as imageio
+import numpy as np
+
 from lumen_xarray_lab.dashboard.export_flow import (
     build_capture_plan,
     export_dashboard_html,
+    make_gif_from_frames,
     write_capture_manifest,
 )
 
@@ -27,3 +31,17 @@ def test_write_capture_manifest(tmp_path):
     assert manifest.exists()
     text = manifest.read_text(encoding="utf-8")
     assert "html-only" in text
+
+
+def test_make_gif_from_frames_normalizes_different_sizes(tmp_path):
+    wide = tmp_path / "wide.png"
+    tall = tmp_path / "tall.png"
+    target = tmp_path / "out.gif"
+
+    imageio.imwrite(wide, np.full((120, 240, 3), 32, dtype=np.uint8))
+    imageio.imwrite(tall, np.full((240, 120, 3), 196, dtype=np.uint8))
+
+    result = make_gif_from_frames([wide, tall], target, duration=0.2)
+
+    assert result.exists()
+    assert result.stat().st_size > 0

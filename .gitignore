@@ -10,10 +10,13 @@ build/
 *.pyd
 *.egg-info/
 docs/gifs/*.gif
+!docs/gifs/dashboard_walkthrough.gif
 docs/screenshots/*.png
 docs/screenshots/*.html
 docs/screenshots/*.json
 assets/screenshots/*.png
+!assets/screenshots/dashboard_desktop.png
+!assets/screenshots/dashboard_mobile.png
 assets/sample_data/*.nc
 assets/sample_data/*.zarr
 benchmarks/results/*.json

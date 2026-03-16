@@ -9,6 +9,22 @@ The separation is deliberate:
 - core, mergeable source work belongs upstream in `lumen`
 - proposal demos, benchmark harnesses, and experimental helpers live here
 
+## Dashboard Preview
+
+![Explorer walkthrough](docs/gifs/dashboard_walkthrough.gif)
+
+<p align="center">
+  <img src="assets/screenshots/dashboard_desktop.png" alt="Desktop explorer dashboard" width="78%" />
+  <img src="assets/screenshots/dashboard_mobile.png" alt="Mobile explorer dashboard" width="18%" />
+</p>
+
+The current dashboard is intentionally Explorer-like rather than a static demo:
+
+- switch between xarray-backed tables
+- choose line, scatter, bar, or histogram views
+- constrain dimensions with datetime and numeric filters
+- inspect the source-style query and pseudo-SQL for the current selection
+
 ## Current Scope
 
 Implemented:
@@ -84,13 +100,6 @@ Launch the demo dashboard:
 panel serve examples/dashboard_app.py --show
 ```
 
-The dashboard behaves like a compact Explorer surface:
-
-- switch between xarray-backed tables
-- choose line, scatter, bar, or histogram views
-- constrain dimensions with datetime and numeric filters
-- inspect the source-style query and pseudo-SQL for the current selection
-
 Run the tests:
 
 ```bash
@@ -119,6 +128,12 @@ Combine saved PNG frames into a GIF:
 ```bash
 python scripts/make_gif.py
 ```
+
+Generated assets currently live at:
+
+- `assets/screenshots/dashboard_desktop.png`
+- `assets/screenshots/dashboard_mobile.png`
+- `docs/gifs/dashboard_walkthrough.gif`
 
 ## Build Order
 

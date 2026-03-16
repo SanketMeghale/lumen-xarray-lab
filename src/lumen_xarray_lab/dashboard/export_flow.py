@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 from typing import Iterable
 
+import numpy as np
 import xarray as xr
 
 from .app import create_dashboard
@@ -54,6 +55,40 @@ def _as_file_url(path: str | Path) -> str:
     return Path(path).resolve().as_uri()
 
 
+def _normalize_frame_shapes(images: list[np.ndarray]) -> list[np.ndarray]:
+    if not images:
+        return images
+
+    normalized: list[np.ndarray] = []
+    max_height = max(image.shape[0] for image in images)
+    max_width = max(image.shape[1] for image in images)
+    max_channels = max(image.shape[2] if image.ndim == 3 else 1 for image in images)
+
+    for image in images:
+        if image.ndim == 2:
+            image = np.repeat(image[:, :, None], max_channels, axis=2)
+        elif image.shape[2] != max_channels:
+            if image.shape[2] == 1:
+                image = np.repeat(image, max_channels, axis=2)
+            elif image.shape[2] > max_channels:
+                image = image[:, :, :max_channels]
+            else:
+                pad_channels = max_channels - image.shape[2]
+                channel_pad = np.full(
+                    (image.shape[0], image.shape[1], pad_channels),
+                    255,
+                    dtype=image.dtype,
+                )
+                image = np.concatenate([image, channel_pad], axis=2)
+
+        canvas = np.full((max_height, max_width, max_channels), 255, dtype=image.dtype)
+        offset_y = (max_height - image.shape[0]) // 2
+        offset_x = (max_width - image.shape[1]) // 2
+        canvas[offset_y : offset_y + image.shape[0], offset_x : offset_x + image.shape[1]] = image
+        normalized.append(canvas)
+    return normalized
+
+
 def capture_dashboard_png(
     html_path: str | Path,
     output_path: str | Path,
@@ -99,7 +134,7 @@ def make_gif_from_frames(
         raise ValueError("No existing frames were provided for GIF generation.")
     target = Path(output_path)
     target.parent.mkdir(parents=True, exist_ok=True)
-    images = [imageio.imread(frame) for frame in frames]
+    images = _normalize_frame_shapes([imageio.imread(frame) for frame in frames])
     imageio.mimsave(target, images, duration=duration, loop=0)
     return target
 
