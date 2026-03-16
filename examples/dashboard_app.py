@@ -17,6 +17,7 @@ def build_app():
 
 
 app = build_app()
+app.servable()
 
 
 if __name__ == "__main__":
