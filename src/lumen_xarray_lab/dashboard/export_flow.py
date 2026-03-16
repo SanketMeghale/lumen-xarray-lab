@@ -16,6 +16,7 @@ class CapturePlan:
     html_path: Path
     desktop_png: Path
     mobile_png: Path
+    story_dir: Path
     manifest_path: Path
     gif_path: Path
 
@@ -29,6 +30,7 @@ def build_capture_plan(root: str | Path) -> CapturePlan:
         html_path=root / "docs" / "screenshots" / "dashboard_snapshot.html",
         desktop_png=root / "assets" / "screenshots" / "dashboard_desktop.png",
         mobile_png=root / "assets" / "screenshots" / "dashboard_mobile.png",
+        story_dir=root / "docs" / "screenshots" / "story_frames",
         manifest_path=root / "docs" / "screenshots" / "capture_manifest.json",
         gif_path=root / "docs" / "gifs" / "dashboard_walkthrough.gif",
     )
@@ -37,6 +39,7 @@ def build_capture_plan(root: str | Path) -> CapturePlan:
 def ensure_capture_dirs(plan: CapturePlan) -> None:
     for path in (plan.html_path, plan.desktop_png, plan.mobile_png, plan.manifest_path, plan.gif_path):
         path.parent.mkdir(parents=True, exist_ok=True)
+    plan.story_dir.mkdir(parents=True, exist_ok=True)
 
 
 def export_dashboard_html(
@@ -115,6 +118,51 @@ def capture_dashboard_png(
         page.screenshot(path=str(target), full_page=True)
         browser.close()
     return target
+
+
+def capture_dashboard_story_frames(
+    html_path: str | Path,
+    output_dir: str | Path,
+    width: int = 1600,
+    height: int = 1200,
+    wait_ms: int = 1800,
+) -> list[Path]:
+    try:
+        from playwright.sync_api import sync_playwright
+    except ImportError as exc:
+        raise RuntimeError(
+            "Story-frame capture requires 'playwright'. Install it and run "
+            "'python -m playwright install chromium'."
+        ) from exc
+
+    target_dir = Path(output_dir)
+    target_dir.mkdir(parents=True, exist_ok=True)
+    html_url = _as_file_url(html_path)
+    sequence = [
+        ("chart", "Chart"),
+        ("data", "Data"),
+        ("source_query", "Source Query"),
+        ("pseudo_sql", "Pseudo SQL"),
+    ]
+    clip = {"x": 250, "y": 360, "width": 1220, "height": 760}
+    captured: list[Path] = []
+
+    with sync_playwright() as playwright:
+        browser = playwright.chromium.launch()
+        page = browser.new_page(viewport={"width": width, "height": height})
+        page.goto(html_url, wait_until="networkidle")
+        page.wait_for_timeout(wait_ms)
+
+        for index, (slug, label) in enumerate(sequence, start=1):
+            if label != "Chart":
+                page.locator(f"text={label}").first.click()
+                page.wait_for_timeout(600)
+            target = target_dir / f"{index:02d}_{slug}.png"
+            page.screenshot(path=str(target), clip=clip)
+            captured.append(target)
+
+        browser.close()
+    return captured
 
 
 def make_gif_from_frames(

@@ -16,6 +16,7 @@ from lumen_xarray_lab.dashboard.export_flow import (
 def test_build_capture_plan():
     plan = build_capture_plan("C:/tmp/lumen-xarray-lab")
     assert str(plan.html_path).endswith("docs\\screenshots\\dashboard_snapshot.html")
+    assert str(plan.story_dir).endswith("docs\\screenshots\\story_frames")
     assert str(plan.gif_path).endswith("docs\\gifs\\dashboard_walkthrough.gif")
 
 

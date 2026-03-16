@@ -14,6 +14,9 @@ from lumen_xarray_lab.dashboard.export_flow import build_capture_plan, make_gif_
 
 def build_default_frames(root: Path) -> tuple[list[Path], Path]:
     plan = build_capture_plan(root)
+    story_frames = sorted(plan.story_dir.glob("*.png"))
+    if story_frames:
+        return story_frames, plan.gif_path
     return [plan.desktop_png, plan.mobile_png], plan.gif_path
 
 

@@ -11,6 +11,7 @@ if str(SRC) not in sys.path:
 
 from lumen_xarray_lab.dashboard.export_flow import (
     build_capture_plan,
+    capture_dashboard_story_frames,
     capture_dashboard_png,
     ensure_capture_dirs,
     export_dashboard_html,
@@ -29,8 +30,9 @@ def run_capture(uri: str | None = None, html_only: bool = False) -> dict[str, st
         try:
             capture_dashboard_png(plan.html_path, plan.desktop_png, width=1600, height=1080)
             capture_dashboard_png(plan.html_path, plan.mobile_png, width=430, height=1200)
+            capture_dashboard_story_frames(plan.html_path, plan.story_dir)
             screenshot_mode = "playwright"
-            notes.append("Captured desktop and mobile screenshots with Playwright.")
+            notes.append("Captured desktop, mobile, and story-frame screenshots with Playwright.")
         except Exception as exc:
             notes.append(f"PNG capture skipped: {exc}")
 
@@ -39,6 +41,7 @@ def run_capture(uri: str | None = None, html_only: bool = False) -> dict[str, st
         "html": str(plan.html_path),
         "desktop_png": str(plan.desktop_png),
         "mobile_png": str(plan.mobile_png),
+        "story_dir": str(plan.story_dir),
         "manifest": str(plan.manifest_path),
         "gif_target": str(plan.gif_path),
         "mode": screenshot_mode,

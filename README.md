@@ -1,37 +1,48 @@
 # lumen-xarray-lab
 
-`lumen-xarray-lab` is a standalone companion repository for building, testing,
-and presenting xarray ideas around Lumen without coupling every experiment to
-the upstream `lumen` repository.
+<p align="center">
+  Companion demos, experiments, and proposal assets for bringing xarray into Lumen.
+</p>
 
-The separation is deliberate:
+<p align="center">
+  <a href="docs/architecture.md">Architecture</a> &middot;
+  <a href="docs/upstream-plan.md">Upstream Plan</a> &middot;
+  <a href="examples/dashboard_app.py">Dashboard App</a> &middot;
+  <a href="assets/diagrams/xarray_source_proposal_diagram.svg">Proposal Diagram</a>
+</p>
 
-- core, mergeable source work belongs upstream in `lumen`
-- proposal demos, benchmark harnesses, and experimental helpers live here
-
-## Dashboard Preview
+## Preview
 
 ![Explorer walkthrough](docs/gifs/dashboard_walkthrough.gif)
 
-<p align="center">
-  <img src="assets/screenshots/dashboard_desktop.png" alt="Desktop explorer dashboard" width="78%" />
-  <img src="assets/screenshots/dashboard_mobile.png" alt="Mobile explorer dashboard" width="18%" />
-</p>
+<table>
+  <tr>
+    <td width="76%">
+      <img src="assets/screenshots/dashboard_desktop.png" alt="Desktop explorer dashboard" />
+    </td>
+    <td width="24%">
+      <img src="assets/screenshots/dashboard_mobile.png" alt="Mobile explorer dashboard" />
+    </td>
+  </tr>
+  <tr>
+    <td><strong>Desktop:</strong> overview, dataset summary, explorer controls, and query-aware output.</td>
+    <td><strong>Mobile:</strong> the same dashboard rendered in a narrower layout.</td>
+  </tr>
+</table>
 
-The current dashboard is intentionally Explorer-like rather than a static demo:
+## What This Repo Proves
 
-- switch between xarray-backed tables
-- choose line, scatter, bar, or histogram views
-- constrain dimensions with datetime and numeric filters
-- inspect the source-style query and pseudo-SQL for the current selection
+- xarray-backed datasets can be surfaced through an Explorer-style Lumen workflow.
+- Queryable coordinates, schema hints, and preview tables can be generated from real datasets.
+- The implementation can stay isolated here while stable pieces move upstream into `lumen`.
+- The demo story is backed by runnable examples, tests, screenshots, and a walkthrough GIF.
 
 ## Current Scope
 
 Implemented:
 
-- runnable project scaffold
-- explorer-style dashboard demo with table switching, dimension filters, plot controls, and query previews
-- example scripts for quickstart, upload flow, and SQL status
+- explorer-style dashboard with table switching, dimension filters, plot controls, and query previews
+- example scripts for quickstart, upload preview flow, and SQL experiment status
 - CF-style coordinate detection helpers
 - schema enrichment helpers
 - benchmark utility functions and scripts
@@ -41,41 +52,21 @@ Still experimental:
 
 - AI upload integration beyond simple previews
 - SQL-backed xarray access
-- benchmark publication with real datasets and raw result snapshots
+- benchmark publication with larger datasets and raw result snapshots
 - upstream extraction of stable lab features
 
 ## Runtime Design
 
-The lab can run in two modes:
+The lab runs in two modes:
 
-1. If a sibling `lumen` checkout with `lumen.sources.xarray.XarraySource`
-   exists, the lab uses it.
-2. Otherwise, the lab falls back to a local `LabXarraySourceAdapter` that
-   implements a compatible subset needed for the demos and tests.
+1. If a sibling `lumen` checkout exposing `lumen.sources.xarray.XarraySource` exists, the lab uses it.
+2. Otherwise, the lab falls back to a local `LabXarraySourceAdapter` that implements the subset required for demos and tests.
 
 That gives you:
 
-- an isolated repo for demos and proposal artifacts
-- a stable fallback when upstream work is still in progress
-- a clean migration path from lab code to upstream PRs
-
-## Repository Layout
-
-```text
-lumen-xarray-lab/
-|- README.md
-|- LICENSE
-|- pyproject.toml
-|- pixi.toml
-|- .github/workflows/
-|- docs/
-|- src/lumen_xarray_lab/
-|- examples/
-|- benchmarks/
-|- scripts/
-|- tests/
-`- assets/
-```
+- an isolated repo for proposal demos and experiments
+- a stable fallback while upstream work is still evolving
+- a clean path from lab code to upstream PRs
 
 ## Quick Start
 
@@ -85,7 +76,7 @@ Install in editable mode:
 pip install -e .[test]
 ```
 
-Run the example scripts:
+Run the examples:
 
 ```bash
 python examples/quickstart.py
@@ -94,7 +85,7 @@ python examples/ai_upload_demo.py
 python examples/sql_explorer_demo.py
 ```
 
-Launch the demo dashboard:
+Launch the dashboard:
 
 ```bash
 panel serve examples/dashboard_app.py --show
@@ -106,45 +97,43 @@ Run the tests:
 pytest -q
 ```
 
-## Screenshot And GIF Flow
+## Media Pipeline
 
-Export a static HTML snapshot of the dashboard:
+Export the static dashboard snapshot:
 
 ```bash
 python scripts/make_screenshots.py --html-only
 ```
 
-If `playwright` is installed and Chromium is available, the same script also
-captures desktop and mobile PNG screenshots:
+Install the demo extras and capture the full media set:
 
 ```bash
 pip install -e .[demo]
 python -m playwright install chromium
 python scripts/make_screenshots.py
-```
-
-Combine saved PNG frames into a GIF:
-
-```bash
 python scripts/make_gif.py
 ```
 
-Generated assets currently live at:
+The capture flow now generates:
 
 - `assets/screenshots/dashboard_desktop.png`
 - `assets/screenshots/dashboard_mobile.png`
+- `docs/screenshots/story_frames/*.png`
 - `docs/gifs/dashboard_walkthrough.gif`
 
-## Build Order
+## Repository Layout
 
-The repository is being built incrementally in this order:
-
-1. top-level packaging, docs, and workflows
-2. dataset/runtime layer
-3. dashboard internals
-4. example scripts and PowerShell helpers
-5. benchmark scripts
-6. upstream extraction plan
+```text
+lumen-xarray-lab/
+|- README.md
+|- docs/
+|- src/lumen_xarray_lab/
+|- examples/
+|- benchmarks/
+|- scripts/
+|- tests/
+`- assets/
+```
 
 ## Useful Entry Points
 
@@ -159,8 +148,7 @@ The repository is being built incrementally in this order:
 
 ## Proposal Positioning
 
-This repo should support a stronger proposal story than a feature-heavy showcase
-package:
+This repo is meant to support an upstream-friendly proposal story:
 
 - honest implemented-vs-planned boundaries
 - working examples and tests for every shipped claim

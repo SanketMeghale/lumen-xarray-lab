@@ -14,6 +14,7 @@ docs/gifs/*.gif
 docs/screenshots/*.png
 docs/screenshots/*.html
 docs/screenshots/*.json
+docs/screenshots/*/
 assets/screenshots/*.png
 !assets/screenshots/dashboard_desktop.png
 !assets/screenshots/dashboard_mobile.png
