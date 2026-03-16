@@ -14,7 +14,7 @@ The separation is deliberate:
 Implemented:
 
 - runnable project scaffold
-- lightweight dashboard demo
+- explorer-style dashboard demo with table switching, dimension filters, plot controls, and query previews
 - example scripts for quickstart, upload flow, and SQL status
 - CF-style coordinate detection helpers
 - schema enrichment helpers
@@ -47,18 +47,18 @@ That gives you:
 
 ```text
 lumen-xarray-lab/
-├─ README.md
-├─ LICENSE
-├─ pyproject.toml
-├─ pixi.toml
-├─ .github/workflows/
-├─ docs/
-├─ src/lumen_xarray_lab/
-├─ examples/
-├─ benchmarks/
-├─ scripts/
-├─ tests/
-└─ assets/
+|- README.md
+|- LICENSE
+|- pyproject.toml
+|- pixi.toml
+|- .github/workflows/
+|- docs/
+|- src/lumen_xarray_lab/
+|- examples/
+|- benchmarks/
+|- scripts/
+|- tests/
+`- assets/
 ```
 
 ## Quick Start
@@ -83,6 +83,13 @@ Launch the demo dashboard:
 ```bash
 panel serve examples/dashboard_app.py --show
 ```
+
+The dashboard behaves like a compact Explorer surface:
+
+- switch between xarray-backed tables
+- choose line, scatter, bar, or histogram views
+- constrain dimensions with datetime and numeric filters
+- inspect the source-style query and pseudo-SQL for the current selection
 
 Run the tests:
 

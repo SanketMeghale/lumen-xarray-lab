@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import panel as pn
 
+from .explorer import ExplorerView
 from .plots import (
     build_coordinate_table,
     build_dimension_table,
@@ -21,13 +22,18 @@ from .widgets import (
 
 
 def build_main_pane(state: DashboardState) -> pn.viewable.Viewable:
+    explorer = ExplorerView(state=state)
     return pn.Column(
         build_hero(state),
         build_metric_row(state),
-        build_header(state),
-        build_summary(state),
+        pn.Row(
+            pn.Card(build_header(state), title="Runtime", collapsed=False, sizing_mode="stretch_width"),
+            pn.Card(build_summary(state), title="Dataset Summary", collapsed=False, sizing_mode="stretch_width"),
+            sizing_mode="stretch_width",
+        ),
+        explorer,
         pn.Tabs(
-            ("Preview", build_preview_table(state)),
+            ("Sample Preview", build_preview_table(state)),
             ("Schema", build_schema_table(state)),
             ("Dimensions", build_dimension_table(state)),
             ("Coordinates", build_coordinate_table(state)),

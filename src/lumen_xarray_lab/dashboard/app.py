@@ -104,6 +104,43 @@ body, .bk-root {
 .lxl-card-markdown {
   padding: 4px 0;
 }
+
+.lxl-explorer-section-title {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--lxl-muted);
+  margin: 4px 0 8px 0;
+}
+
+.lxl-explorer-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.lxl-explorer-summary > div {
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: rgba(17, 120, 100, 0.08);
+  border: 1px solid rgba(17, 120, 100, 0.14);
+}
+
+.lxl-explorer-summary strong {
+  display: block;
+  margin-top: 6px;
+  color: var(--lxl-ink);
+  font-size: 18px;
+}
+
+.lxl-explorer-label {
+  color: var(--lxl-muted);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
 """
 
 
