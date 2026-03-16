@@ -146,6 +146,80 @@ body, .bk-root {
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
+
+.lxl-explorer-rail .bk-Card,
+.lxl-explorer-rail .bk-panel-models-layout-Card,
+.lxl-selection-banner,
+.lxl-field-grid {
+  box-shadow: 0 16px 34px rgba(15, 23, 42, 0.08);
+}
+
+.lxl-selection-banner {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+  padding: 16px 18px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(17, 120, 100, 0.14), rgba(207, 127, 41, 0.12));
+  border: 1px solid rgba(20, 35, 33, 0.08);
+}
+
+.lxl-selection-banner > div {
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.72);
+  min-height: 68px;
+}
+
+.lxl-selection-banner strong {
+  display: block;
+  margin-top: 8px;
+  color: var(--lxl-ink);
+  font-size: 16px;
+  line-height: 1.35;
+}
+
+.lxl-field-grid {
+  display: grid;
+  gap: 14px;
+  padding: 8px 0 2px 0;
+}
+
+.lxl-field-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.lxl-field-chip {
+  min-width: 110px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(17, 120, 100, 0.08);
+  border: 1px solid rgba(17, 120, 100, 0.14);
+}
+
+.lxl-field-chip span,
+.lxl-field-chip em,
+.lxl-field-copy {
+  color: var(--lxl-muted);
+  font-size: 12px;
+  font-style: normal;
+}
+
+.lxl-field-chip strong {
+  display: block;
+  margin: 6px 0 4px 0;
+  color: var(--lxl-ink);
+  font-size: 15px;
+}
+
+.lxl-field-copy {
+  margin-top: 8px;
+  line-height: 1.5;
+}
 """
 
 

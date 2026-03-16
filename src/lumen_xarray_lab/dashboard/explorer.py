@@ -15,6 +15,7 @@ from panel.viewable import Viewer
 
 from .state import DashboardState
 
+ROLE_ORDER = ("time", "latitude", "longitude", "vertical")
 _SPATIAL_FALLBACKS = {
     "latitude": ["lat", "latitude", "y"],
     "longitude": ["lon", "longitude", "x"],
@@ -73,7 +74,18 @@ class ExplorerView(Viewer):
         super().__init__(**params)
         self._filter_widgets: dict[str, pn.widgets.Widget] = {}
 
-        self._table = pn.widgets.Select(name="Table", options=self.state.tables, value=self.state.table)
+        self._table_search = pn.widgets.AutocompleteInput(
+            name="Search table",
+            options=self.state.tables,
+            value=self.state.table,
+            restrict=True,
+            case_sensitive=False,
+            search_strategy="includes",
+            min_characters=0,
+            placeholder="Search or select a table...",
+            sizing_mode="stretch_width",
+        )
+        self._table = pn.widgets.Select(name="Active table", options=self.state.tables, value=self.state.table)
         self._chart_type = pn.widgets.Select(
             name="Chart",
             options=["line", "scatter", "bar", "histogram", "spatial"],
@@ -97,6 +109,8 @@ class ExplorerView(Viewer):
         self._compare_summary = pn.pane.Markdown(css_classes=["lxl-card-markdown"])
         self._status = pn.pane.Markdown(css_classes=["lxl-card-markdown"])
         self._summary = pn.pane.HTML(sizing_mode="stretch_width")
+        self._selection_banner = pn.pane.HTML(sizing_mode="stretch_width")
+        self._field_inventory = pn.pane.HTML(sizing_mode="stretch_width")
         self._active_filters = pn.pane.Markdown(css_classes=["lxl-card-markdown"])
         self._download_csv = pn.widgets.FileDownload(
             label="Current CSV",
@@ -113,6 +127,7 @@ class ExplorerView(Viewer):
             sizing_mode="stretch_width",
         )
 
+        self._table_search.param.watch(self._on_table_search, "value")
         self._table.param.watch(self._on_table_change, "value")
         for widget in (
             self._chart_type,
@@ -129,53 +144,97 @@ class ExplorerView(Viewer):
         self._sync_compare_options()
         self._update_outputs()
 
-        controls = pn.Column(
-            pn.pane.HTML("<div class='lxl-explorer-section-title'>Explorer Controls</div>"),
-            self._table,
-            self._chart_type,
-            self._x,
-            self._y,
-            self._limit,
-            pn.pane.HTML("<div class='lxl-explorer-section-title'>Compare / Export</div>"),
-            self._compare_table,
-            self._compare_mode,
-            pn.Row(self._download_csv, self._download_json, sizing_mode="stretch_width"),
-            pn.pane.HTML("<div class='lxl-explorer-section-title'>Dimension Filters</div>"),
-            self._filters,
-            self._status,
+        dataset_card = pn.Card(
+            pn.Column(
+                pn.pane.HTML("<div class='lxl-explorer-section-title'>Dataset</div>"),
+                self._table_search,
+                self._table,
+                self._field_inventory,
+                sizing_mode="stretch_width",
+            ),
+            title="Dataset Explorer",
+            collapsed=False,
+            sizing_mode="stretch_width",
+            styles={"border-radius": "18px"},
+        )
+        visual_card = pn.Card(
+            pn.Column(
+                pn.pane.HTML("<div class='lxl-explorer-section-title'>Visual Controls</div>"),
+                self._chart_type,
+                self._x,
+                self._y,
+                self._limit,
+                sizing_mode="stretch_width",
+            ),
+            title="View Builder",
+            collapsed=False,
+            sizing_mode="stretch_width",
+            styles={"border-radius": "18px"},
+        )
+        filter_card = pn.Card(
+            pn.Column(
+                pn.pane.HTML("<div class='lxl-explorer-section-title'>Active Query</div>"),
+                self._active_filters,
+                pn.pane.HTML("<div class='lxl-explorer-section-title'>Dimension Filters</div>"),
+                self._filters,
+                sizing_mode="stretch_width",
+            ),
+            title="Filters",
+            collapsed=False,
+            sizing_mode="stretch_width",
+            styles={"border-radius": "18px"},
+        )
+        compare_card = pn.Card(
+            pn.Column(
+                pn.pane.HTML("<div class='lxl-explorer-section-title'>Compare / Export</div>"),
+                self._compare_table,
+                self._compare_mode,
+                pn.Row(self._download_csv, self._download_json, sizing_mode="stretch_width"),
+                self._status,
+                sizing_mode="stretch_width",
+            ),
+            title="Actions",
+            collapsed=False,
+            sizing_mode="stretch_width",
+            styles={"border-radius": "18px"},
+        )
+
+        self._output_tabs = pn.Tabs(
+            ("Chart", self._chart),
+            ("Data", self._data),
+            ("Statistics", self._stats),
+            ("Compare", pn.Column(self._compare_summary, self._compare_table_view, sizing_mode="stretch_width")),
+            ("Coverage", pn.Column(self._coverage_summary, self._coverage_table, sizing_mode="stretch_width")),
+            ("Source Query", self._query),
+            ("Pseudo SQL", self._sql),
             sizing_mode="stretch_width",
         )
+
         self._layout = pn.Row(
-            pn.Card(
-                controls,
-                title="Dataset Explorer",
-                collapsed=False,
-                sizing_mode="stretch_width",
-                styles={"border-radius": "18px"},
+            pn.Column(
+                dataset_card,
+                visual_card,
+                filter_card,
+                compare_card,
                 min_width=360,
+                max_width=390,
+                sizing_mode="stretch_height",
+                css_classes=["lxl-explorer-rail"],
             ),
             pn.Column(
-                pn.Card(
-                    pn.Column(
+                self._selection_banner,
+                pn.Row(
+                    pn.Card(
                         self._summary,
-                        self._active_filters,
-                        pn.Tabs(
-                            ("Chart", self._chart),
-                            ("Data", self._data),
-                            ("Statistics", self._stats),
-                            (
-                                "Compare",
-                                pn.Column(self._compare_summary, self._compare_table_view, sizing_mode="stretch_width"),
-                            ),
-                            (
-                                "Coverage",
-                                pn.Column(self._coverage_summary, self._coverage_table, sizing_mode="stretch_width"),
-                            ),
-                            ("Source Query", self._query),
-                            ("Pseudo SQL", self._sql),
-                        ),
+                        title="Selection Summary",
+                        collapsed=False,
                         sizing_mode="stretch_width",
+                        styles={"border-radius": "18px"},
                     ),
+                    sizing_mode="stretch_width",
+                ),
+                pn.Card(
+                    self._output_tabs,
                     title="Explorer Output",
                     collapsed=False,
                     sizing_mode="stretch_width",
@@ -206,13 +265,21 @@ class ExplorerView(Viewer):
             return (float(np.min(values)), float(np.max(values)))
         return "All"
 
+    def _ordered_dimensions(self, table: str) -> list[tuple[str, dict[str, Any]]]:
+        dim_info = _dimension_info_for_table(self.state, table)
+        role_rank = {
+            coord_name: index
+            for index, role in enumerate(ROLE_ORDER)
+            if (coord_name := self.state.coord_map.get(role)) is not None
+        }
+        return sorted(dim_info.items(), key=lambda item: (role_rank.get(item[0], len(ROLE_ORDER)), item[0]))
+
     def _rebuild_filters(self) -> None:
         self._filter_widgets.clear()
         self._filters.objects = []
-        dim_info = _dimension_info_for_table(self.state, self._table.value)
         widgets: list[pn.viewable.Viewable] = []
 
-        for name, spec in dim_info.items():
+        for name, spec in self._ordered_dimensions(self._table.value):
             widget: pn.widgets.Widget
             if spec["type"] == "datetime":
                 values = pd.to_datetime(spec["values"])
@@ -244,11 +311,23 @@ class ExplorerView(Viewer):
 
         self._filters.objects = widgets
 
+    def _preferred_x_column(self, columns: list[str], default_y: str) -> str:
+        preferred = [
+            self.state.coord_map.get("time"),
+            self.state.coord_map.get("longitude"),
+            self.state.coord_map.get("latitude"),
+            self.state.coord_map.get("vertical"),
+        ]
+        for candidate in preferred:
+            if candidate in columns and candidate != default_y:
+                return candidate
+        return next((col for col in columns if col != default_y), columns[0])
+
     def _sync_axis_options(self) -> None:
         columns = self._table_columns(self._table.value)
         numeric = self._numeric_columns(self._table.value)
         default_y = self._table.value if self._table.value in numeric else (numeric[0] if numeric else columns[-1])
-        default_x = next((col for col in columns if col != default_y), columns[0])
+        default_x = self._preferred_x_column(columns, default_y)
         self._x.options = columns
         self._y.options = numeric or columns
         self._x.value = default_x
@@ -437,6 +516,18 @@ class ExplorerView(Viewer):
         lon_col = _resolve_role_column(self.state, df, "longitude")
         return lat_col, lon_col
 
+    def _style_plot(self, plot) -> None:
+        plot.toolbar.logo = None
+        plot.toolbar_location = "above"
+        plot.background_fill_color = "#fbf7ef"
+        plot.border_fill_color = "#fbf7ef"
+        plot.outline_line_color = "#d8d3c6"
+        plot.grid.grid_line_color = "#e4dfd3"
+        plot.grid.grid_line_alpha = 0.8
+        plot.axis.axis_line_color = "#9aa6a2"
+        plot.axis.major_tick_line_color = "#9aa6a2"
+        plot.axis.minor_tick_line_color = None
+
     def _build_plot(self, df: pd.DataFrame):
         x = self._x.value
         y = self._y.value
@@ -464,7 +555,7 @@ class ExplorerView(Viewer):
             mapper = LinearColorMapper(palette=Viridis256, low=low, high=high)
             source = ColumnDataSource(spatial)
             plot = figure(
-                height=360,
+                height=380,
                 sizing_mode="stretch_width",
                 title=f"Spatial view: {y}",
                 x_axis_label=lon_col,
@@ -497,8 +588,7 @@ class ExplorerView(Viewer):
                 ),
                 "right",
             )
-            plot.toolbar.logo = None
-            plot.toolbar_location = "above"
+            self._style_plot(plot)
             return plot
 
         if x not in df.columns or y not in df.columns:
@@ -509,20 +599,19 @@ class ExplorerView(Viewer):
             if series.empty:
                 return pn.pane.Markdown("Histogram requires a numeric y column.")
             hist, edges = np.histogram(series, bins=min(20, max(5, len(series))))
-            plot = figure(height=360, sizing_mode="stretch_width", title=f"{y} distribution")
+            plot = figure(height=380, sizing_mode="stretch_width", title=f"{y} distribution")
             plot.quad(top=hist, bottom=0, left=edges[:-1], right=edges[1:], fill_color="#117864", line_color="#0b3d38")
-            plot.toolbar.logo = None
-            plot.toolbar_location = "above"
+            self._style_plot(plot)
             return plot
 
         axis_type = "datetime" if pd.api.types.is_datetime64_any_dtype(df[x]) else "auto"
-        plot = figure(height=360, sizing_mode="stretch_width", title=f"{chart_type.title()} plot: {y} vs {x}", x_axis_type=axis_type)
+        plot = figure(height=380, sizing_mode="stretch_width", title=f"{chart_type.title()} plot: {y} vs {x}", x_axis_type=axis_type)
         source = ColumnDataSource(df.assign(__x__=df[x], __y__=df[y]))
 
         if chart_type == "line":
             ordered = df.sort_values(x)
             source = ColumnDataSource(ordered.assign(__x__=ordered[x], __y__=ordered[y]))
-            plot.line("__x__", "__y__", line_width=2, color="#117864", source=source)
+            plot.line("__x__", "__y__", line_width=3, color="#117864", source=source)
             plot.scatter("__x__", "__y__", size=7, color="#cf7f29", source=source)
         elif chart_type == "scatter":
             plot.scatter("__x__", "__y__", size=8, fill_color="#117864", line_color="#0b3d38", fill_alpha=0.85, source=source)
@@ -531,7 +620,7 @@ class ExplorerView(Viewer):
             grouped[x] = grouped[x].astype(str)
             source = ColumnDataSource(grouped.assign(__x__=grouped[x], __y__=grouped[y]))
             plot = figure(
-                height=360,
+                height=380,
                 sizing_mode="stretch_width",
                 title=f"Mean {y} by {x}",
                 x_range=list(grouped[x]),
@@ -539,8 +628,7 @@ class ExplorerView(Viewer):
             plot.vbar(x="__x__", top="__y__", width=0.8, color="#117864", source=source)
 
         plot.add_tools(HoverTool(tooltips=[(x, "@__x__"), (y, "@__y__")]))
-        plot.toolbar.logo = None
-        plot.toolbar_location = "above"
+        self._style_plot(plot)
         return plot
 
     def _export_csv(self) -> StringIO:
@@ -554,7 +642,70 @@ class ExplorerView(Viewer):
         buffer.seek(0)
         return buffer
 
+    def _build_field_inventory_html(self) -> str:
+        columns = self._table_columns(self._table.value)
+        numeric = self._numeric_columns(self._table.value)
+        role_chunks = []
+        for role in ROLE_ORDER:
+            name = self.state.coord_map.get(role)
+            if name is None or name not in columns:
+                continue
+            meta = self.state.coord_metadata.get(name, {})
+            confidence = meta.get("confidence", "none")
+            role_chunks.append(
+                "<div class='lxl-field-chip'>"
+                f"<span>{role}</span>"
+                f"<strong>{name}</strong>"
+                f"<em>{confidence}</em>"
+                "</div>"
+            )
+        if not role_chunks:
+            role_chunks.append("<div class='lxl-field-chip'><span>roles</span><strong>none</strong><em>n/a</em></div>")
+
+        queryable_dims = ", ".join(_dimension_info_for_table(self.state, self._table.value)) or "none"
+        numeric_label = ", ".join(numeric[:5]) if numeric else "none"
+        if len(numeric) > 5:
+            numeric_label += f" +{len(numeric) - 5} more"
+        return (
+            "<div class='lxl-field-grid'>"
+            "<div>"
+            "<div class='lxl-explorer-label'>Detected roles</div>"
+            f"<div class='lxl-field-chip-row'>{''.join(role_chunks)}</div>"
+            "</div>"
+            "<div>"
+            "<div class='lxl-explorer-label'>Queryable dimensions</div>"
+            f"<div class='lxl-field-copy'>{queryable_dims}</div>"
+            "</div>"
+            "<div>"
+            "<div class='lxl-explorer-label'>Numeric fields</div>"
+            f"<div class='lxl-field-copy'>{numeric_label}</div>"
+            "</div>"
+            "</div>"
+        )
+
+    def _build_selection_banner_html(self, df: pd.DataFrame) -> str:
+        lat_col, lon_col = self._resolve_spatial_columns(df)
+        compare_label = self._compare_table.value if self._compare_table.value != "None" else "off"
+        spatial_label = "ready" if lat_col and lon_col else "unavailable"
+        return (
+            "<div class='lxl-selection-banner'>"
+            f"<div><span class='lxl-explorer-label'>Table</span><strong>{self._table.value}</strong></div>"
+            f"<div><span class='lxl-explorer-label'>Rows</span><strong>{len(df)}</strong></div>"
+            f"<div><span class='lxl-explorer-label'>X / Y</span><strong>{self._x.value} / {self._y.value}</strong></div>"
+            f"<div><span class='lxl-explorer-label'>Chart</span><strong>{self._chart_type.value}</strong></div>"
+            f"<div><span class='lxl-explorer-label'>Spatial</span><strong>{spatial_label}</strong></div>"
+            f"<div><span class='lxl-explorer-label'>Compare</span><strong>{compare_label}</strong></div>"
+            "</div>"
+        )
+
+    def _on_table_search(self, event=None) -> None:
+        if event is None or not event.new or event.new == self._table.value:
+            return
+        if event.new in self.state.tables:
+            self._table.value = event.new
+
     def _on_table_change(self, event=None) -> None:
+        self._table_search.value = self._table.value
         self._rebuild_filters()
         self._sync_axis_options()
         self._sync_compare_options()
@@ -570,12 +721,15 @@ class ExplorerView(Viewer):
 
         filter_count = len(self._collect_query())
         compare_label = self._compare_table.value if self._compare_table.value != "None" else "off"
+
+        self._selection_banner.object = self._build_selection_banner_html(df)
+        self._field_inventory.object = self._build_field_inventory_html()
         self._summary.object = (
             "<div class='lxl-explorer-summary'>"
-            f"<div><span class='lxl-explorer-label'>Table</span><strong>{self._table.value}</strong></div>"
-            f"<div><span class='lxl-explorer-label'>Rows</span><strong>{len(df)}</strong></div>"
+            f"<div><span class='lxl-explorer-label'>Table rows</span><strong>{self._table_row_count(self._table.value)}</strong></div>"
+            f"<div><span class='lxl-explorer-label'>Selection rows</span><strong>{len(df)}</strong></div>"
             f"<div><span class='lxl-explorer-label'>Filters</span><strong>{filter_count}</strong></div>"
-            f"<div><span class='lxl-explorer-label'>Chart</span><strong>{self._chart_type.value}</strong></div>"
+            f"<div><span class='lxl-explorer-label'>Value field</span><strong>{self._table.value}</strong></div>"
             f"<div><span class='lxl-explorer-label'>Compare</span><strong>{compare_label}</strong></div>"
             "</div>"
         )

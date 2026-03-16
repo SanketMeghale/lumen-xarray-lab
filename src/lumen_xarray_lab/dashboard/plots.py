@@ -54,13 +54,15 @@ def build_coordinate_table(state: DashboardState) -> pn.viewable.Viewable:
             {
                 "coordinate": name,
                 "role": spec.get("role"),
+                "selected": spec.get("selected"),
+                "confidence": spec.get("confidence"),
                 "dtype": spec.get("dtype"),
                 "size": spec.get("size"),
                 "start": spec.get("start"),
                 "end": spec.get("end"),
             }
         )
-    return _tabulator(rows, ["coordinate", "role", "dtype", "size", "start", "end"])
+    return _tabulator(rows, ["coordinate", "role", "selected", "confidence", "dtype", "size", "start", "end"])
 
 
 def build_runtime_table(state: DashboardState) -> pn.viewable.Viewable:
