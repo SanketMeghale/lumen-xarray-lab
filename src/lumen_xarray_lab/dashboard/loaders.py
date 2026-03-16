@@ -13,16 +13,15 @@ def load_demo_state() -> DashboardState:
     return DashboardState.from_dataset(dataset)
 
 
-def load_state_from_uri(uri: str) -> DashboardState:
-    dataset = xr.open_dataset(uri)
-    return DashboardState.from_dataset(dataset, uri=uri)
+def load_state_from_uri(uri: str, **source_kwargs) -> DashboardState:
+    return DashboardState.from_uri(uri, **source_kwargs)
 
 
-def resolve_state(dataset: xr.Dataset | None = None, uri: str | None = None) -> DashboardState:
+def resolve_state(dataset: xr.Dataset | None = None, uri: str | None = None, **source_kwargs) -> DashboardState:
     if dataset is not None:
-        return DashboardState.from_dataset(dataset)
+        return DashboardState.from_dataset(dataset, **source_kwargs)
     if uri:
-        return load_state_from_uri(uri)
+        return load_state_from_uri(uri, **source_kwargs)
     return load_demo_state()
 
 

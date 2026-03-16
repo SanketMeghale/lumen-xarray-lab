@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
 import sys
 from typing import Any
@@ -96,12 +96,29 @@ class LabXarraySourceAdapter:
     uri: str | None = None
     filterable_coords: list[str] | None = None
     max_rows: int = 0
+    dataset_format: str = "auto"
+    load_kwargs: dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         if self.dataset is None and self.uri is None:
             raise ValueError("Provide either 'dataset' or 'uri'.")
         if self.dataset is None:
-            self.dataset = xr.open_dataset(self.uri)
+            self.dataset = self._open_dataset(self.uri)
+
+    def _is_zarr_uri(self, uri: str) -> bool:
+        lowered = str(uri).lower()
+        return (
+            self.dataset_format == "zarr"
+            or self.load_kwargs.get("engine") == "zarr"
+            or lowered.endswith(".zarr")
+        )
+
+    def _open_dataset(self, uri: str | None) -> xr.Dataset:
+        if uri is None:
+            raise ValueError("A uri is required to open a dataset.")
+        if self._is_zarr_uri(uri):
+            return xr.open_zarr(uri, **self.load_kwargs)
+        return xr.open_dataset(uri, **self.load_kwargs)
 
     def close(self) -> None:
         if self.dataset is not None and hasattr(self.dataset, "close"):

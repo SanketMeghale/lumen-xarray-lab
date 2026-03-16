@@ -54,11 +54,27 @@ class DashboardState:
     @classmethod
     def from_dataset(cls, dataset: xr.Dataset, table: str | None = None, **source_kwargs: Any) -> "DashboardState":
         source = build_source(dataset=dataset, **source_kwargs)
+        return cls._from_source(source=source, dataset_hint=dataset, table=table)
+
+    @classmethod
+    def from_uri(cls, uri: str, table: str | None = None, **source_kwargs: Any) -> "DashboardState":
+        source = build_source(uri=uri, **source_kwargs)
+        return cls._from_source(source=source, dataset_hint=None, table=table)
+
+    @classmethod
+    def _from_source(
+        cls,
+        source: Any,
+        dataset_hint: xr.Dataset | None,
+        table: str | None = None,
+    ) -> "DashboardState":
         tables = source.get_tables()
         active_table = table or tables[0]
         raw_schema = source.get_schema(active_table)
         metadata = source.get_metadata(active_table)
-        source_dataset = get_dataset_from_source(source) or dataset
+        source_dataset = get_dataset_from_source(source) or dataset_hint
+        if source_dataset is None:
+            raise ValueError("Could not resolve an xarray.Dataset from the source.")
         dimension_info = (
             source.get_dimension_info(active_table)
             if hasattr(source, "get_dimension_info")
@@ -82,3 +98,8 @@ class DashboardState:
             runtime_source=runtime_info.backend_label,
             runtime_details=runtime_info.to_dict(),
         )
+
+    def close(self) -> None:
+        source_close = getattr(self.source, "close", None)
+        if callable(source_close):
+            source_close()
