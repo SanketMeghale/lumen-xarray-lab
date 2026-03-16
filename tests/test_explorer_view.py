@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+
 from bokeh.models.layouts import LayoutDOM
 
 from lumen_xarray_lab.dashboard.explorer import ExplorerView
@@ -58,3 +60,49 @@ def test_explorer_query_panels_include_filter_summary(synthetic_dataset):
     explorer._update_outputs()
     assert "Active filters" in explorer._active_filters.object
     assert "BETWEEN" in explorer.sql_preview_text()
+
+
+def test_explorer_spatial_chart_renders(synthetic_dataset):
+    state = DashboardState.from_dataset(synthetic_dataset)
+    explorer = ExplorerView(state=state)
+    explorer._chart_type.value = "spatial"
+    plot = explorer._build_plot(explorer.current_dataframe())
+    assert isinstance(plot, LayoutDOM)
+
+
+def test_explorer_statistics_and_coverage(synthetic_dataset):
+    state = DashboardState.from_dataset(synthetic_dataset)
+    explorer = ExplorerView(state=state)
+    df = explorer.current_dataframe()
+    stats = explorer._build_statistics_dataframe(df)
+    coverage = explorer._build_coverage_dataframe(df)
+
+    assert "mean" in stats.columns
+    assert "temperature" in stats["column"].tolist()
+    assert set(coverage["dimension"]) == {"time", "lat", "lon"}
+    assert coverage["selected_unique"].min() >= 1
+
+
+def test_explorer_builds_comparison_dataframe(multi_table_dataset):
+    state = DashboardState.from_dataset(multi_table_dataset)
+    explorer = ExplorerView(state=state)
+    explorer._compare_table.value = "humidity"
+    summary, compare_df = explorer._build_comparison_dataframe(explorer.current_dataframe())
+
+    assert "Correlation" in summary
+    assert "difference" in compare_df.columns
+    assert "ratio" in compare_df.columns
+    assert len(compare_df) >= 1
+
+
+def test_explorer_exports_current_selection(synthetic_dataset):
+    state = DashboardState.from_dataset(synthetic_dataset)
+    explorer = ExplorerView(state=state)
+
+    csv_text = explorer._export_csv().getvalue()
+    json_text = explorer._export_json().getvalue()
+
+    assert "temperature" in csv_text
+    records = json.loads(json_text)
+    assert records
+    assert "temperature" in records[0]

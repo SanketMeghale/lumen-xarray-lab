@@ -3,6 +3,7 @@ __pycache__/
 .ruff_cache/
 .venv/
 .pixi/
+run-logs/
 dist/
 build/
 *.pyc

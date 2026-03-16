@@ -34,6 +34,7 @@
 
 - xarray-backed datasets can be surfaced through an Explorer-style Lumen workflow.
 - Queryable coordinates, schema hints, and preview tables can be generated from real datasets.
+- Spatial views, comparison on shared coordinates, and selection-level statistics can be driven from the same explorer.
 - The implementation can stay isolated here while stable pieces move upstream into `lumen`.
 - The demo story is backed by runnable examples, tests, screenshots, and a walkthrough GIF.
 
@@ -41,7 +42,7 @@
 
 Implemented:
 
-- explorer-style dashboard with table switching, dimension filters, plot controls, and query previews
+- explorer-style dashboard with table switching, dimension filters, spatial plots, comparison views, statistics, coverage, export, and query previews
 - example scripts for quickstart, upload preview flow, and SQL experiment status
 - CF-style coordinate detection helpers
 - schema enrichment helpers
