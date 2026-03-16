@@ -11,6 +11,8 @@ build/
 *.egg-info/
 docs/gifs/*.gif
 docs/screenshots/*.png
+docs/screenshots/*.html
+docs/screenshots/*.json
 assets/screenshots/*.png
 assets/sample_data/*.nc
 assets/sample_data/*.zarr

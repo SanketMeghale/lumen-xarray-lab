@@ -1,4 +1,7 @@
 $ErrorActionPreference = "Stop"
-Write-Host "Capture screenshots manually from the running dashboard and save them to:"
-Write-Host "  assets/screenshots/"
-Write-Host "  docs/screenshots/"
+$root = Split-Path -Parent $PSScriptRoot
+python "$root\scripts\make_screenshots.py" @args
+Write-Host ""
+Write-Host "For browser screenshots install the optional tools if needed:"
+Write-Host "  pip install -e .[demo]"
+Write-Host "  python -m playwright install chromium"

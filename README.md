@@ -90,6 +90,29 @@ Run the tests:
 pytest -q
 ```
 
+## Screenshot And GIF Flow
+
+Export a static HTML snapshot of the dashboard:
+
+```bash
+python scripts/make_screenshots.py --html-only
+```
+
+If `playwright` is installed and Chromium is available, the same script also
+captures desktop and mobile PNG screenshots:
+
+```bash
+pip install -e .[demo]
+python -m playwright install chromium
+python scripts/make_screenshots.py
+```
+
+Combine saved PNG frames into a GIF:
+
+```bash
+python scripts/make_gif.py
+```
+
 ## Build Order
 
 The repository is being built incrementally in this order:
