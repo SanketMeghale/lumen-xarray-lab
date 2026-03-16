@@ -106,3 +106,18 @@ def test_explorer_exports_current_selection(synthetic_dataset):
     records = json.loads(json_text)
     assert records
     assert "temperature" in records[0]
+
+
+def test_explorer_uses_dataset_sampling_instead_of_source_get(synthetic_dataset):
+    state = DashboardState.from_dataset(synthetic_dataset)
+
+    def fail_get(*args, **kwargs):
+        raise AssertionError("Explorer should not call source.get() for sampled views.")
+
+    state.source.get = fail_get
+    explorer = ExplorerView(state=state)
+
+    df = explorer.current_dataframe()
+
+    assert not df.empty
+    assert "temperature" in df.columns

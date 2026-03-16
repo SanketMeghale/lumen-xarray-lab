@@ -2,10 +2,12 @@ from __future__ import annotations
 
 from pathlib import Path
 import tempfile
+from urllib.parse import urlparse
 
 import panel as pn
 import xarray as xr
 
+from ..datasets import bundled_sample_paths
 from .loaders import resolve_state
 from .panes import build_main_pane, build_sidebar
 from .state import DashboardState
@@ -228,6 +230,8 @@ class DashboardController:
         self._state: DashboardState | None = None
         self._temp_upload_paths: list[Path] = []
         self._active_upload_path: Path | None = None
+        self._repo_root = Path(__file__).resolve().parents[3]
+        self._bundled_samples = bundled_sample_paths()
 
         self._path_input = pn.widgets.TextInput(
             name="Path or URI",
@@ -251,6 +255,18 @@ class DashboardController:
             button_type="light",
             sizing_mode="stretch_width",
         )
+        self._sample_select = pn.widgets.Select(
+            name="Bundled sample",
+            options={name: str(path) for name, path in self._bundled_samples.items()} or {"none": ""},
+            value=(str(next(iter(self._bundled_samples.values()))) if self._bundled_samples else ""),
+            sizing_mode="stretch_width",
+        )
+        self._load_sample_button = pn.widgets.Button(
+            name="Load Sample",
+            button_type="primary",
+            sizing_mode="stretch_width",
+            disabled=not bool(self._bundled_samples),
+        )
         self._upload_input = pn.widgets.FileInput(
             name="Upload dataset",
             accept=".nc,.nc4,.netcdf,.h5,.hdf5",
@@ -266,6 +282,7 @@ class DashboardController:
 
         self._load_path_button.on_click(self._on_load_path)
         self._load_demo_button.on_click(self._on_load_demo)
+        self._load_sample_button.on_click(self._on_load_sample)
         self._load_upload_button.on_click(self._on_load_upload)
 
         self._loader_card = build_sidebar_card(
@@ -283,6 +300,17 @@ class DashboardController:
                 self._path_input,
                 self._format_select,
                 pn.Row(self._load_path_button, self._load_demo_button, sizing_mode="stretch_width"),
+                pn.pane.Markdown(
+                    "\n".join(
+                        [
+                            "### Bundled Samples",
+                            "Use a saved local sample to test the explorer quickly.",
+                        ]
+                    ),
+                    css_classes=["lxl-card-markdown"],
+                ),
+                self._sample_select,
+                self._load_sample_button,
                 pn.pane.Markdown(
                     "\n".join(
                         [
@@ -334,6 +362,24 @@ class DashboardController:
         if self._format_select.value == "auto":
             return {}
         return {"dataset_format": self._format_select.value}
+
+    def _is_remote_uri(self, candidate: str) -> bool:
+        parsed = urlparse(candidate)
+        return bool(parsed.scheme and parsed.scheme not in ("file",) and not (len(parsed.scheme) == 1 and candidate[1:2] == ":"))
+
+    def _normalize_uri_candidate(self, candidate: str) -> str:
+        if self._is_remote_uri(candidate) or candidate.startswith("file://"):
+            return candidate
+        path = Path(candidate).expanduser()
+        if path.is_absolute():
+            return str(path)
+        repo_relative = (self._repo_root / path).resolve()
+        if repo_relative.exists():
+            return str(repo_relative)
+        cwd_relative = (Path.cwd() / path).resolve()
+        if cwd_relative.exists():
+            return str(cwd_relative)
+        return str(path)
 
     def _set_status(self, message: str) -> None:
         self._loader_status.object = message
@@ -430,22 +476,41 @@ class DashboardController:
         if not candidate:
             self._set_status("**Load failed:** enter a dataset path or URI first.")
             return
+        resolved = self._normalize_uri_candidate(candidate)
+        if not self._is_remote_uri(resolved) and not resolved.startswith("file://") and not Path(resolved).exists():
+            self._set_status(f"**Load failed:** `{resolved}` does not exist.")
+            return
         try:
-            self.load_from_uri(candidate)
+            self._set_status(f"**Loading:** opening `{resolved}` ...")
+            self.load_from_uri(resolved)
         except Exception as exc:
-            self._set_status(f"**Load failed:** `{candidate}` could not be opened. `{exc}`")
+            self._set_status(f"**Load failed:** `{resolved}` could not be opened. `{exc}`")
 
     def _on_load_demo(self, event=None) -> None:
         try:
+            self._set_status("**Loading:** opening bundled demo dataset ...")
             self.load_demo()
         except Exception as exc:  # pragma: no cover - defensive UI path
             self._set_status(f"**Load failed:** demo dataset could not be loaded. `{exc}`")
+
+    def _on_load_sample(self, event=None) -> None:
+        if not self._sample_select.value:
+            self._set_status("**Load failed:** no bundled sample is available.")
+            return
+        try:
+            self._set_status(f"**Loading:** opening bundled sample `{Path(self._sample_select.value).name}` ...")
+            self.load_from_uri(self._sample_select.value, source_label=f"bundled sample `{Path(self._sample_select.value).name}`")
+        except Exception as exc:
+            self._set_status(
+                f"**Load failed:** bundled sample `{Path(self._sample_select.value).name}` could not be opened. `{exc}`"
+            )
 
     def _on_load_upload(self, event=None) -> None:
         if not self._upload_input.value or not self._upload_input.filename:
             self._set_status("**Load failed:** choose a file to upload first.")
             return
         try:
+            self._set_status(f"**Loading:** opening uploaded file `{self._upload_input.filename}` ...")
             self.load_from_upload(self._upload_input.filename, self._upload_input.value)
         except Exception as exc:
             self._set_status(

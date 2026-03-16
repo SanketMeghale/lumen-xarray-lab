@@ -29,6 +29,10 @@ def _desktop_root() -> Path:
     return _repo_root().parent
 
 
+def _sample_data_root() -> Path:
+    return _repo_root() / "assets" / "sample_data"
+
+
 def _candidate_lumen_paths() -> list[Path]:
     desktop = _desktop_root()
     return [
@@ -308,6 +312,65 @@ def get_dataset_from_source(source: Any) -> xr.Dataset | None:
     return None
 
 
+def sample_table_dataframe(
+    dataset: xr.Dataset,
+    table: str,
+    query: dict[str, Any] | None = None,
+    limit: int = 250,
+    filterable_coords: list[str] | None = None,
+) -> pd.DataFrame:
+    if table not in dataset.data_vars:
+        raise KeyError(f"Unknown table {table!r}.")
+    arr = dataset[table]
+    allowed = set(filterable_coords) if filterable_coords is not None else None
+    queryable = [
+        name
+        for name, coord in arr.coords.items()
+        if coord.ndim == 1 and (allowed is None or name in allowed)
+    ]
+
+    for key, raw_value in (query or {}).items():
+        if key.startswith("__") or key not in queryable:
+            continue
+        value = _normalize_query_value(raw_value)
+        coord = arr.coords[key]
+        if isinstance(value, slice):
+            arr = arr.sel(
+                {
+                    key: slice(
+                        _normalize_scalar_for_coord(coord, value.start),
+                        _normalize_scalar_for_coord(coord, value.stop),
+                        value.step,
+                    )
+                }
+            )
+        elif isinstance(value, list):
+            normalized = [_normalize_scalar_for_coord(coord, item) for item in value]
+            arr = arr.sel({key: normalized})
+        else:
+            arr = arr.sel({key: _normalize_scalar_for_coord(coord, value)})
+
+    if limit > 0 and arr.ndim:
+        limited = arr
+        dims = list(limited.dims)
+        for i, dim in enumerate(dims):
+            size = int(limited.sizes[dim])
+            trailing = 1
+            for tail_dim in dims[i + 1 :]:
+                trailing *= int(limited.sizes[tail_dim])
+            max_size = max(1, min(size, int(np.ceil(limit / trailing))))
+            if size > max_size:
+                limited = limited.isel({dim: slice(0, max_size)})
+        arr = limited
+
+    if arr.ndim == 0:
+        return pd.DataFrame({table: [arr.item()]})
+
+    df = arr.to_dataframe(name=table).reset_index()
+    ordered = [*queryable, table]
+    return df[[col for col in ordered if col in df.columns]]
+
+
 def _build_embedded_demo_dataset() -> xr.Dataset:
     time = np.array(["2013-01-01", "2013-01-02"], dtype="datetime64[ns]")
     lat = np.array([50.0, 60.0])
@@ -336,7 +399,22 @@ def _build_embedded_demo_dataset() -> xr.Dataset:
     return ds
 
 
+def bundled_sample_paths() -> dict[str, Path]:
+    sample_names = ("air_temperature", "compare_weather", "ersstv5", "rasm")
+    root = _sample_data_root()
+    return {
+        name: (root / f"{name}.nc")
+        for name in sample_names
+        if (root / f"{name}.nc").exists()
+    }
+
+
 def load_demo_dataset(name: str = "air_temperature") -> xr.Dataset:
+    local_samples = bundled_sample_paths()
+    if name in local_samples:
+        return xr.open_dataset(local_samples[name])
+    if name == "air_temperature":
+        return _build_embedded_demo_dataset()
     try:
         return xr.tutorial.open_dataset(name)
     except Exception:

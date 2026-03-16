@@ -13,6 +13,7 @@ from bokeh.palettes import Viridis256
 from bokeh.plotting import figure
 from panel.viewable import Viewer
 
+from ..datasets import sample_table_dataframe
 from .state import DashboardState
 
 ROLE_ORDER = ("time", "latitude", "longitude", "vertical")
@@ -249,12 +250,29 @@ class ExplorerView(Viewer):
     def filter_widgets(self) -> dict[str, pn.widgets.Widget]:
         return self._filter_widgets
 
+    def _queryable_columns(self, table: str) -> list[str]:
+        arr = self.state.dataset[table]
+        allowed = getattr(self.state.source, "filterable_coords", None)
+        allowed_set = set(allowed) if allowed is not None else None
+        return [
+            name
+            for name, coord in arr.coords.items()
+            if coord.ndim == 1 and (allowed_set is None or name in allowed_set)
+        ]
+
     def _table_columns(self, table: str) -> list[str]:
-        return list(self.state.dataset[table].to_dataframe(name=table).reset_index().columns)
+        return [*self._queryable_columns(table), table]
 
     def _numeric_columns(self, table: str) -> list[str]:
-        df = self.state.dataset[table].to_dataframe(name=table).reset_index()
-        return [col for col in df.columns if pd.api.types.is_numeric_dtype(df[col])]
+        arr = self.state.dataset[table]
+        numeric = [
+            name
+            for name in self._queryable_columns(table)
+            if pd.api.types.is_numeric_dtype(arr.coords[name].dtype)
+        ]
+        if pd.api.types.is_numeric_dtype(arr.dtype):
+            numeric.append(table)
+        return numeric
 
     def _default_filter_value(self, spec: dict[str, Any]) -> Any:
         if spec["type"] == "datetime":
@@ -379,8 +397,13 @@ class ExplorerView(Viewer):
         return 0
 
     def current_dataframe(self) -> pd.DataFrame:
-        df = self.state.source.get(self._table.value, **self._collect_query())
-        return df.head(self._limit.value)
+        return sample_table_dataframe(
+            self.state.dataset,
+            self._table.value,
+            query=self._collect_query(),
+            limit=self._limit.value,
+            filterable_coords=getattr(self.state.source, "filterable_coords", None),
+        )
 
     def source_query_text(self) -> str:
         parts = [repr(self._table.value)]
@@ -475,7 +498,13 @@ class ExplorerView(Viewer):
             return "Select another table to compare on shared coordinates.", pd.DataFrame()
 
         try:
-            other_df = self.state.source.get(other_table, **self._collect_query()).head(self._limit.value)
+            other_df = sample_table_dataframe(
+                self.state.dataset,
+                other_table,
+                query=self._collect_query(),
+                limit=self._limit.value,
+                filterable_coords=getattr(self.state.source, "filterable_coords", None),
+            )
         except Exception as exc:  # pragma: no cover - defensive UI path
             return f"Comparison query failed for `{other_table}`: {exc}", pd.DataFrame()
 

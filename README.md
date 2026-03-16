@@ -101,6 +101,7 @@ panel serve examples/dashboard_app.py --show --args "C:\path\to\dataset.nc"
 Inside the dashboard, use the `Load Dataset` card in the sidebar to:
 
 - open a local file path or URI without restarting the server
+- load a bundled sample such as `air_temperature`, `rasm`, `ersstv5`, or `compare_weather`
 - point the explorer at a local `.zarr` directory
 - upload a single NetCDF/HDF file into the current session
 

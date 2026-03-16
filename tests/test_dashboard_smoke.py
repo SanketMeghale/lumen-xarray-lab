@@ -60,6 +60,24 @@ def test_dashboard_controller_loads_uploaded_file(synthetic_dataset):
     assert "uploaded.nc" in controller._loader_summary.object
 
 
+def test_dashboard_controller_normalizes_repo_relative_paths(tmp_path, synthetic_dataset, monkeypatch):
+    path = tmp_path / "relative.nc"
+    dataset = synthetic_dataset.copy(deep=True)
+    for variable in dataset.variables:
+        dataset[variable].encoding = {}
+    dataset.to_netcdf(path)
+
+    dashboard = create_dashboard()
+    controller = dashboard._dashboard_controller
+    monkeypatch.setattr(controller, "_repo_root", tmp_path)
+
+    controller._path_input.value = "relative.nc"
+    controller._on_load_path()
+
+    assert controller.state.tables == ["temperature"]
+    assert str(path) in controller._loader_status.object
+
+
 def test_dashboard_controller_removes_stale_uploaded_files(synthetic_dataset):
     payload = synthetic_dataset.to_netcdf()
     dashboard = create_dashboard()

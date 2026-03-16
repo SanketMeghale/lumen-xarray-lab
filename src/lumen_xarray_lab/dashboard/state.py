@@ -7,7 +7,7 @@ import pandas as pd
 import xarray as xr
 
 from ..cf import detect_coordinates, get_coordinate_metadata
-from ..datasets import build_source, get_dataset_from_source, resolve_runtime_source_info
+from ..datasets import build_source, get_dataset_from_source, resolve_runtime_source_info, sample_table_dataframe
 from ..schema_enrichment import enrich_schema
 
 
@@ -82,7 +82,12 @@ class DashboardState:
         )
         coord_metadata = get_coordinate_metadata(source_dataset)
         schema = enrich_schema(raw_schema, metadata=metadata, coord_info=coord_metadata)
-        preview = source.get(active_table).head(25)
+        preview = sample_table_dataframe(
+            source_dataset,
+            active_table,
+            limit=25,
+            filterable_coords=getattr(source, "filterable_coords", None),
+        )
         runtime_info = resolve_runtime_source_info()
         return cls(
             dataset=source_dataset,
