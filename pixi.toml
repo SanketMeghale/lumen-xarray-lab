@@ -1,0 +1,25 @@
+[project]
+name = "lumen-xarray-lab"
+channels = ["conda-forge"]
+platforms = ["win-64", "linux-64"]
+
+[tasks]
+test = "pytest -q"
+quickstart = "python examples/quickstart.py"
+air-demo = "python examples/air_temperature_demo.py"
+upload-demo = "python examples/ai_upload_demo.py"
+sql-demo = "python examples/sql_explorer_demo.py"
+dashboard = "panel serve examples/dashboard_app.py --show"
+bench-flatten = "python benchmarks/flattening_vs_sql.py"
+bench-grid = "python benchmarks/large_grid_limits.py"
+
+[dependencies]
+python = "3.11.*"
+numpy = "*"
+pandas = "*"
+panel = "*"
+xarray = "*"
+pytest = "*"
+netcdf4 = "*"
+pooch = "*"
+pip = "*"

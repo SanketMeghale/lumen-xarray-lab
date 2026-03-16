@@ -1,0 +1,23 @@
+name: docs
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+jobs:
+  validate-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check docs files
+        run: |
+          test -f README.md
+          test -f docs/architecture.md
+          test -f docs/roadmap.md
+          test -f docs/benchmarks.md
+          test -f docs/upstream-plan.md
+      - name: Check example entry points
+        run: |
+          test -f examples/quickstart.py
+          test -f examples/dashboard_app.py

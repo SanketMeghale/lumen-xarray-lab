@@ -1,0 +1,17 @@
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+.venv/
+.pixi/
+dist/
+build/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+docs/gifs/*.gif
+docs/screenshots/*.png
+assets/screenshots/*.png
+assets/sample_data/*.nc
+assets/sample_data/*.zarr
+benchmarks/results/*.json
