@@ -13,7 +13,6 @@
 
 ## Preview
 
-![Explorer walkthrough](docs/gifs/dashboard_walkthrough.gif)
 
 <table>
   <tr>
