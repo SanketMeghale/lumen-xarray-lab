@@ -39,18 +39,9 @@
 > - **Upstream position:** this repo is a companion prototype, not a replacement for upstream `lumen`.
 > - **Best files to inspect first:** [`docs/architecture.md`](docs/architecture.md), [`docs/proposal-alignment.md`](docs/proposal-alignment.md), [`docs/upstream-plan.md`](docs/upstream-plan.md), [`src/lumen_xarray_lab/datasets.py`](src/lumen_xarray_lab/datasets.py), and [`examples/dashboard_app.py`](examples/dashboard_app.py).
 
-## Proof At A Glance
 
-<table>
-  <tr>
-    <td width="25%"><strong>67 passing tests</strong><br />Runtime, explorer, export, transforms, CF logic, AI hooks, and SQL helpers are covered by the current suite.</td>
-    <td width="25%"><strong>29 screenshots and GIFs</strong><br />The README visuals come from the running app, not static mockups.</td>
-    <td width="25%"><strong>6 bundled datasets</strong><br />Demo, compare, multi-file, curvilinear, and real-world validation datasets are included.</td>
-    <td width="25%"><strong>Real-world validation</strong><br />ERSSTv5 is used to validate real climate workflows and query-planning behavior.</td>
-  </tr>
-</table>
 
-## Next Upstream PR
+## Next Upstream 
 
 The next upstream-ready slice should stay small and reviewable. The exact target files are:
 
@@ -77,7 +68,7 @@ If a mentor wants to evaluate the prototype fast, these are the highest-signal c
 4. Inspect [`src/lumen_xarray_lab/datasets.py`](src/lumen_xarray_lab/datasets.py) and [`src/lumen_xarray_lab/cf.py`](src/lumen_xarray_lab/cf.py) for the core runtime and coordinate-role logic.
 5. Run `pytest -q` and `panel serve examples/dashboard_app.py --show` to validate the proof locally.
 
-## Reviewer Snapshot
+## Quick Snapshot
 
 This repository exists to de-risk an upstream `XarraySource` contribution.
 
