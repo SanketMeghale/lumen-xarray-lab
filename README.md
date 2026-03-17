@@ -31,16 +31,7 @@
 > - **Upstream position:** this repo is a companion prototype, not a replacement for upstream `lumen`.
 > - **Best files to inspect first:** [`docs/architecture.md`](docs/architecture.md), [`docs/proposal-alignment.md`](docs/proposal-alignment.md), [`docs/upstream-plan.md`](docs/upstream-plan.md), [`src/lumen_xarray_lab/datasets.py`](src/lumen_xarray_lab/datasets.py), and [`examples/dashboard_app.py`](examples/dashboard_app.py).
 
-## Proof At A Glance
 
-<table>
-  <tr>
-    <td width="25%"><strong>67 passing tests</strong><br />Explorer, runtime, export, schema, CF, transforms, AI hooks, and SQL explorer helpers are covered by the current suite.</td>
-    <td width="25%"><strong>29 generated screenshots</strong><br />Hero, feature-tour, and real-world images in this README are exported from the running app, not mocked manually.</td>
-    <td width="25%"><strong>6 bundled datasets</strong><br />The repo includes demo, compare, multi-file, curvilinear-grid, and real-world climate datasets for reliable validation.</td>
-    <td width="25%"><strong>6 reviewer docs</strong><br />Architecture, benchmarks, roadmap, reviewer guide, proposal alignment, and upstream plan make the repo easy to evaluate quickly.</td>
-  </tr>
-</table>
 
 ## Mentor Quick Check
 
