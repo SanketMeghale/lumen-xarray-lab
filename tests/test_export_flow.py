@@ -16,6 +16,7 @@ from lumen_xarray_lab.dashboard.export_flow import (
 def test_build_capture_plan():
     plan = build_capture_plan("C:/tmp/lumen-xarray-lab")
     assert str(plan.html_path).endswith("docs\\screenshots\\dashboard_snapshot.html")
+    assert str(plan.gallery_dir).endswith("assets\\screenshots\\gallery")
     assert str(plan.story_dir).endswith("docs\\screenshots\\story_frames")
     assert str(plan.gif_path).endswith("docs\\gifs\\dashboard_walkthrough.gif")
 
@@ -24,6 +25,18 @@ def test_export_dashboard_html(tmp_path, synthetic_dataset):
     output = export_dashboard_html(tmp_path / "snapshot.html", dataset=synthetic_dataset)
     assert output.exists()
     assert "<html" in output.read_text(encoding="utf-8", errors="ignore").lower()
+
+
+def test_export_dashboard_html_accepts_configure_callback(tmp_path, synthetic_dataset):
+    called = {"value": False}
+
+    def configure(controller):
+        called["value"] = controller._explorer is not None
+
+    output = export_dashboard_html(tmp_path / "configured.html", dataset=synthetic_dataset, configure=configure)
+
+    assert output.exists()
+    assert called["value"]
 
 
 def test_write_capture_manifest(tmp_path):

@@ -3,7 +3,8 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass
 import json
 from pathlib import Path
-from typing import Iterable
+import tempfile
+from typing import Callable, Iterable
 
 import numpy as np
 import xarray as xr
@@ -16,6 +17,7 @@ class CapturePlan:
     html_path: Path
     desktop_png: Path
     mobile_png: Path
+    gallery_dir: Path
     story_dir: Path
     manifest_path: Path
     gif_path: Path
@@ -30,6 +32,7 @@ def build_capture_plan(root: str | Path) -> CapturePlan:
         html_path=root / "docs" / "screenshots" / "dashboard_snapshot.html",
         desktop_png=root / "assets" / "screenshots" / "dashboard_desktop.png",
         mobile_png=root / "assets" / "screenshots" / "dashboard_mobile.png",
+        gallery_dir=root / "assets" / "screenshots" / "gallery",
         story_dir=root / "docs" / "screenshots" / "story_frames",
         manifest_path=root / "docs" / "screenshots" / "capture_manifest.json",
         gif_path=root / "docs" / "gifs" / "dashboard_walkthrough.gif",
@@ -39,6 +42,7 @@ def build_capture_plan(root: str | Path) -> CapturePlan:
 def ensure_capture_dirs(plan: CapturePlan) -> None:
     for path in (plan.html_path, plan.desktop_png, plan.mobile_png, plan.manifest_path, plan.gif_path):
         path.parent.mkdir(parents=True, exist_ok=True)
+    plan.gallery_dir.mkdir(parents=True, exist_ok=True)
     plan.story_dir.mkdir(parents=True, exist_ok=True)
 
 
@@ -46,10 +50,14 @@ def export_dashboard_html(
     output_path: str | Path,
     dataset: xr.Dataset | None = None,
     uri: str | None = None,
+    configure: Callable[[object], None] | None = None,
 ) -> Path:
     output = Path(output_path)
     output.parent.mkdir(parents=True, exist_ok=True)
     dashboard = create_dashboard(dataset=dataset, uri=uri)
+    controller = getattr(dashboard, "_dashboard_controller", None)
+    if configure is not None and controller is not None:
+        configure(controller)
     dashboard.save(str(output), resources="inline")
     return output
 
@@ -166,6 +174,107 @@ def capture_dashboard_story_frames(
 
         browser.close()
     return captured
+
+
+def capture_gallery_png(
+    html_path: str | Path,
+    output_path: str | Path,
+    clip: dict[str, int],
+    width: int = 1600,
+    height: int = 1200,
+    wait_ms: int = 1800,
+) -> Path:
+    try:
+        from playwright.sync_api import sync_playwright
+    except ImportError as exc:
+        raise RuntimeError(
+            "Gallery capture requires 'playwright'. Install it and run "
+            "'python -m playwright install chromium'."
+        ) from exc
+
+    target = Path(output_path)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    html_url = _as_file_url(html_path)
+    with sync_playwright() as playwright:
+        browser = playwright.chromium.launch()
+        page = browser.new_page(viewport={"width": width, "height": height})
+        page.goto(html_url, wait_until="networkidle")
+        page.wait_for_timeout(wait_ms)
+        page.screenshot(path=str(target), clip=clip)
+        browser.close()
+    return target
+
+
+def capture_feature_gallery(root: str | Path) -> list[Path]:
+    root = Path(root)
+    plan = build_capture_plan(root)
+    ensure_capture_dirs(plan)
+    for existing in plan.gallery_dir.glob("*.png"):
+        existing.unlink()
+
+    samples = root / "assets" / "sample_data"
+    output_clip = {"x": 520, "y": 440, "width": 1010, "height": 690}
+    overview_clip = {"x": 250, "y": 70, "width": 1290, "height": 960}
+
+    captures: list[tuple[str, str, Callable[[object], None] | None, dict[str, int]]] = [
+        (
+            str(samples / "air_temperature.nc"),
+            "01_overview.png",
+            None,
+            overview_clip,
+        ),
+        (
+            str(samples / "air_temperature.nc"),
+            "02_spatial_plot.png",
+            lambda controller: (
+                setattr(controller._explorer._chart_type, "value", "spatial"),
+                setattr(controller._explorer._output_tabs, "active", 0),
+            ),
+            output_clip,
+        ),
+        (
+            str(samples / "air_temperature.nc"),
+            "03_statistics.png",
+            lambda controller: setattr(controller._explorer._output_tabs, "active", 2),
+            output_clip,
+        ),
+        (
+            str(samples / "air_temperature.nc"),
+            "04_source_query.png",
+            lambda controller: setattr(controller._explorer._output_tabs, "active", 5),
+            output_clip,
+        ),
+        (
+            str(samples / "air_temperature.nc"),
+            "05_pseudo_sql.png",
+            lambda controller: setattr(controller._explorer._output_tabs, "active", 6),
+            output_clip,
+        ),
+        (
+            str(samples / "compare_weather.nc"),
+            "06_compare.png",
+            lambda controller: (
+                setattr(controller._explorer._compare_table, "value", "humidity"),
+                setattr(controller._explorer._output_tabs, "active", 3),
+            ),
+            output_clip,
+        ),
+        (
+            str(samples / "air_temperature.nc"),
+            "07_coverage.png",
+            lambda controller: setattr(controller._explorer._output_tabs, "active", 4),
+            output_clip,
+        ),
+    ]
+
+    rendered: list[Path] = []
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmp_root = Path(tmpdir)
+        for uri, filename, configure, clip in captures:
+            html_path = tmp_root / filename.replace(".png", ".html")
+            export_dashboard_html(html_path, uri=uri, configure=configure)
+            rendered.append(capture_gallery_png(html_path, plan.gallery_dir / filename, clip=clip))
+    return rendered
 
 
 def make_gif_from_frames(

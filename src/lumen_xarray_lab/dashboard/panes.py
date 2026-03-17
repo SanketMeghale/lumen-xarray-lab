@@ -29,7 +29,7 @@ def build_main_pane(state: DashboardState) -> pn.viewable.Viewable:
         "background": "#ffffff",
         "border": "1px solid #d9e1ea",
     }
-    return pn.Column(
+    pane = pn.Column(
         build_hero(state),
         build_metric_row(state),
         pn.Row(
@@ -61,6 +61,8 @@ def build_main_pane(state: DashboardState) -> pn.viewable.Viewable:
         ),
         sizing_mode="stretch_width",
     )
+    pane._explorer_view = explorer
+    return pane
 
 
 def build_sidebar(state: DashboardState) -> list[pn.viewable.Viewable]:

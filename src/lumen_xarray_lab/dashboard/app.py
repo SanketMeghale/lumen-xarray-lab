@@ -370,6 +370,7 @@ body, .bk-root {
 class DashboardController:
     def __init__(self, dataset: xr.Dataset | None = None, uri: str | None = None):
         self._state: DashboardState | None = None
+        self._explorer = None
         self._temp_upload_paths: list[Path] = []
         self._active_upload_path: Path | None = None
         self._repo_root = Path(__file__).resolve().parents[3]
@@ -539,7 +540,9 @@ class DashboardController:
         )
 
     def _refresh_layout(self, source_label: str) -> None:
-        self._main.objects = [build_main_pane(self.state)]
+        main_pane = build_main_pane(self.state)
+        self._explorer = getattr(main_pane, "_explorer_view", None)
+        self._main.objects = [main_pane]
         self._sidebar.objects = [self._loader_card, *build_sidebar(self.state)]
         self._update_loader_summary(source_label)
 
