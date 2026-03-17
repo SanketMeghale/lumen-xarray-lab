@@ -1,4 +1,4 @@
-from .ai_hooks import build_cli_example, build_upload_preview, is_xarray_path
+from .ai_hooks import build_ai_context, build_cli_example, build_upload_preview, is_xarray_path
 from .benchmark_utils import estimate_dataframe_bytes, estimate_flattened_rows
 from .cf import detect_coordinates, get_coordinate_metadata
 from .datasets import (
@@ -18,6 +18,7 @@ __all__ = [
     "LabXarraySourceAdapter",
     "RuntimeSourceInfo",
     "build_cli_example",
+    "build_ai_context",
     "build_source",
     "build_upload_preview",
     "detect_coordinates",

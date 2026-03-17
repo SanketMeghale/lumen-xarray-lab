@@ -8,11 +8,25 @@ SRC = ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
+from lumen_xarray_lab.datasets import load_demo_dataset
 from lumen_xarray_lab.sql_source import ExperimentalSQLSource
 
 
 def get_status() -> dict[str, object]:
-    return ExperimentalSQLSource().status()
+    dataset = load_demo_dataset("air_temperature")
+    source = ExperimentalSQLSource(dataset=dataset, max_rows=500)
+    query = 'SELECT lat, AVG("air") AS mean_air FROM "air" GROUP BY lat ORDER BY lat'
+    result = source.execute(query)
+    status = source.status()
+    status.update(
+        {
+            "query": query,
+            "result_columns": list(result.columns),
+            "result_rows": len(result),
+        }
+    )
+    dataset.close()
+    return status
 
 
 def main() -> None:

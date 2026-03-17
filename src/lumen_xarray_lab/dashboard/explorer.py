@@ -15,7 +15,9 @@ from bokeh.palettes import Blues256
 from bokeh.plotting import figure
 from panel.viewable import Viewer
 
+from ..ai_hooks import build_ai_context
 from ..datasets import apply_query_to_array, estimate_query_cost, make_dataframe_panel_safe, sample_table_dataframe
+from ..sql_source import ExperimentalSQLSource
 from ..transforms import RESAMPLE_RULES, TRANSFORM_AGGREGATIONS, TRANSFORM_OPTIONS, apply_transform, resolve_time_dimension
 from .state import DashboardState
 
@@ -117,6 +119,15 @@ class ExplorerView(Viewer):
         )
         self._compare_table = pn.widgets.Select(name="Compare table", options=["None"], value="None")
         self._compare_mode = pn.widgets.Select(name="Compare mode", options=["difference", "ratio"], value="difference")
+        self._sql_examples = pn.widgets.Select(name="SQL examples", options=[])
+        self._sql_editor = pn.widgets.TextAreaInput(
+            name="SQL query",
+            value="",
+            placeholder='SELECT * FROM "table" LIMIT 12',
+            min_height=120,
+            sizing_mode="stretch_width",
+        )
+        self._sql_run = pn.widgets.Button(name="Run SQL", button_type="primary", sizing_mode="stretch_width")
         self._time_mode = pn.widgets.Select(
             name="Analysis mode",
             options=["raw", "rolling mean", "anomaly", "cumulative", "trend"],
@@ -150,9 +161,13 @@ class ExplorerView(Viewer):
         self._active_filters = pn.pane.Markdown(css_classes=["lxl-card-markdown"])
         self._dataset_info = pn.pane.HTML(sizing_mode="stretch_width")
         self._attribute_preview = pn.pane.Markdown(css_classes=["lxl-card-markdown"])
+        self._ai_summary = pn.pane.HTML(sizing_mode="stretch_width")
+        self._ai_prompts = pn.pane.Markdown(css_classes=["lxl-card-markdown"])
         self._query_cost = pn.pane.HTML(sizing_mode="stretch_width")
         self._query_warning = pn.pane.Markdown(css_classes=["lxl-card-markdown"])
         self._transform_plot = pn.Column(sizing_mode="stretch_width", min_height=420)
+        self._sql_result_summary = pn.pane.Markdown(css_classes=["lxl-card-markdown"])
+        self._sql_result_table = pn.widgets.Tabulator(pd.DataFrame(), pagination="local", page_size=12, sizing_mode="stretch_width")
         self._download_csv = pn.widgets.FileDownload(
             label="Current CSV",
             button_type="primary",
@@ -170,6 +185,8 @@ class ExplorerView(Viewer):
 
         self._table_search.param.watch(self._on_table_search, "value")
         self._table.param.watch(self._on_table_change, "value")
+        self._sql_examples.param.watch(self._on_sql_example_change, "value")
+        self._sql_run.on_click(self._run_sql_query)
         for widget in (
             self._chart_type,
             self._x,
@@ -189,9 +206,17 @@ class ExplorerView(Viewer):
         ):
             widget.param.watch(self._update_outputs, "value")
 
+        self._sql_source = ExperimentalSQLSource(
+            dataset=self.state.dataset,
+            filterable_coords=getattr(self.state.source, "filterable_coords", None),
+            max_rows=max(500, self._limit.value * 4),
+        )
+        self._last_sql_result = pd.DataFrame()
+
         self._rebuild_filters()
         self._sync_axis_options()
         self._sync_compare_options()
+        self._sync_sql_examples()
         self._update_outputs()
 
         paper_styles = {
@@ -228,6 +253,19 @@ class ExplorerView(Viewer):
             collapsed=False,
             sizing_mode="stretch_width",
             css_classes=["lxl-paper-card", "lxl-explorer-dataset-info-card"],
+            styles=paper_styles,
+        )
+        ai_card = pn.Card(
+            pn.Column(
+                self._ai_summary,
+                pn.pane.HTML("<div class='lxl-explorer-section-title'>Suggested prompts</div>"),
+                self._ai_prompts,
+                sizing_mode="stretch_width",
+            ),
+            title="AI Assist",
+            collapsed=False,
+            sizing_mode="stretch_width",
+            css_classes=["lxl-paper-card", "lxl-explorer-ai-card"],
             styles=paper_styles,
         )
         visual_card = pn.Card(
@@ -320,6 +358,17 @@ class ExplorerView(Viewer):
             ("Coverage", pn.Column(self._coverage_summary, self._coverage_table, sizing_mode="stretch_width")),
             ("Source Query", self._query),
             ("Pseudo SQL", self._sql),
+            (
+                "SQL Explorer",
+                pn.Column(
+                    self._sql_examples,
+                    self._sql_editor,
+                    self._sql_run,
+                    self._sql_result_summary,
+                    self._sql_result_table,
+                    sizing_mode="stretch_width",
+                ),
+            ),
             sizing_mode="stretch_width",
         )
 
@@ -344,6 +393,7 @@ class ExplorerView(Viewer):
             pn.Column(
                 dataset_card,
                 dataset_info_card,
+                ai_card,
                 visual_card,
                 query_card,
                 filter_card,
@@ -477,6 +527,41 @@ class ExplorerView(Viewer):
         if self._compare_table.value not in options:
             self._compare_table.value = "None"
         self._compare_mode.disabled = self._compare_table.value == "None"
+
+    def _sync_sql_examples(self) -> None:
+        examples = self._sql_source.example_queries(preferred_table=self._table.value)
+        self._sql_examples.options = examples
+        if self._sql_examples.value not in examples:
+            self._sql_examples.value = examples[0]
+        if not self._sql_editor.value.strip():
+            self._sql_editor.value = self._sql_examples.value
+
+    def _on_sql_example_change(self, event=None) -> None:
+        if event is None or not event.new:
+            return
+        self._sql_editor.value = event.new
+
+    def _run_sql_query(self, event=None) -> None:
+        query = self._sql_editor.value.strip()
+        try:
+            result = self._sql_source.execute(query)
+        except Exception as exc:
+            self._last_sql_result = pd.DataFrame()
+            self._sql_result_summary.object = (
+                f"**SQL status:** failed  \n"
+                f"**Query:** `{query or 'empty'}`  \n"
+                f"**Error:** {exc}"
+            )
+            self._sql_result_table.value = pd.DataFrame()
+            return
+
+        self._last_sql_result = result
+        self._sql_result_summary.object = (
+            f"**SQL status:** ok  \n"
+            f"**Rows returned:** {len(result)}  \n"
+            f"**Columns:** {', '.join(result.columns) if len(result.columns) else 'none'}"
+        )
+        self._sql_result_table.value = result
 
     def _active_filter_lines(self) -> list[str]:
         filters = self._collect_query()
@@ -906,6 +991,34 @@ class ExplorerView(Viewer):
         except Exception as exc:
             return pn.pane.Markdown(f"GeoViews map build failed for the current selection. `{exc}`")
 
+    def _ai_context(self) -> dict[str, Any]:
+        return build_ai_context(
+            self.state.dataset,
+            table=self._table.value,
+            coord_map=self.state.coord_map,
+        )
+
+    def _build_ai_summary_html(self) -> str:
+        context = self._ai_context()
+        roles = ", ".join(f"{role}={name}" for role, name in context.get("selected_roles", {}).items()) or "none"
+        capabilities = ", ".join(context.get("capabilities", [])) or "none"
+        transforms = ", ".join(context.get("suggested_transforms", [])[:4]) or "none"
+        return (
+            "<div class='lxl-info-grid'>"
+            f"<div><span class='lxl-explorer-label'>Dataset</span><strong>{escape(context.get('dataset_title', 'Untitled dataset'))}</strong><em>{context.get('table_count', 0)} table(s)</em></div>"
+            f"<div><span class='lxl-explorer-label'>Active table</span><strong>{escape(context.get('table') or 'n/a')}</strong><em>roles: {escape(roles)}</em></div>"
+            f"<div><span class='lxl-explorer-label'>Capabilities</span><strong>{escape(capabilities)}</strong><em>lightweight dataset-aware hints</em></div>"
+            f"<div><span class='lxl-explorer-label'>Suggested transforms</span><strong>{escape(transforms)}</strong><em>derived from detected coordinates</em></div>"
+            "</div>"
+        )
+
+    def _build_ai_prompts_markdown(self) -> str:
+        prompts = self._ai_context().get("suggested_prompts", [])
+        lines = ["**Suggested prompts**"]
+        for prompt in prompts[:5]:
+            lines.append(f"- {prompt}")
+        return "\n".join(lines)
+
     def _build_dataset_info_html(self) -> str:
         arr = self.state.dataset[self._table.value]
         table_meta = self.state.metadata if isinstance(self.state.metadata, dict) else {}
@@ -1321,6 +1434,7 @@ class ExplorerView(Viewer):
         self._rebuild_filters()
         self._sync_axis_options()
         self._sync_compare_options()
+        self._sync_sql_examples()
         self._update_outputs()
 
     def _update_outputs(self, event=None) -> None:
@@ -1328,6 +1442,7 @@ class ExplorerView(Viewer):
         self._time_window.disabled = self._time_mode.value != "rolling mean"
         self._transform_window.disabled = self._transform_mode.value != "rolling mean"
         self._transform_rule.disabled = self._transform_mode.value != "resample"
+        self._sql_source.max_rows = max(500, self._limit.value * 4)
 
         df = self.current_dataframe()
         query_cost = self.current_query_cost()
@@ -1343,6 +1458,8 @@ class ExplorerView(Viewer):
         self._selection_banner.object = self._build_selection_banner_html(df)
         self._field_inventory.object = self._build_field_inventory_html()
         self._dataset_info.object = self._build_dataset_info_html()
+        self._ai_summary.object = self._build_ai_summary_html()
+        self._ai_prompts.object = self._build_ai_prompts_markdown()
         self._cf_table.value = self._build_cf_dataframe()
         self._attribute_preview.object = self._build_attribute_preview()
         self._query_cost.object = self._build_query_cost_html(query_cost, len(df))
@@ -1386,6 +1503,8 @@ class ExplorerView(Viewer):
         self._chart.objects = [pn.panel(self._build_plot(df), sizing_mode="stretch_width")]
         self._time_plot.objects = [pn.panel(time_plot, sizing_mode="stretch_width")]
         self._transform_plot.objects = [pn.panel(transform_plot, sizing_mode="stretch_width")]
+        if self._sql_result_summary.object in (None, "") and self._sql_editor.value.strip():
+            self._run_sql_query()
 
         slug = self._table.value.replace(" ", "_")
         self._download_csv.filename = f"{slug}_selection.csv"

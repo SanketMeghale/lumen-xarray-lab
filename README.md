@@ -27,7 +27,7 @@
 > **GSoC reviewer summary**
 >
 > - **Goal:** prove that Lumen can support xarray datasets without losing its tabular source boundary.
-> - **Already working here:** runnable explorer, tested source/runtime adapter, CF-aware coordinate detection, multi-file loading, scientific transforms, GeoViews maps, real-world ERSSTv5 validation, screenshots, GIFs, and benchmark notes.
+> - **Already working here:** runnable explorer, tested source/runtime adapter, CF-aware coordinate detection, multi-file loading, scientific transforms, GeoViews maps, lightweight AI assist, bounded SQL explorer, real-world ERSSTv5 validation, screenshots, GIFs, and benchmark notes.
 > - **Upstream position:** this repo is a companion prototype, not a replacement for upstream `lumen`.
 > - **Best files to inspect first:** [`docs/architecture.md`](docs/architecture.md), [`docs/proposal-alignment.md`](docs/proposal-alignment.md), [`docs/upstream-plan.md`](docs/upstream-plan.md), [`src/lumen_xarray_lab/datasets.py`](src/lumen_xarray_lab/datasets.py), and [`examples/dashboard_app.py`](examples/dashboard_app.py).
 
@@ -35,8 +35,8 @@
 
 <table>
   <tr>
-    <td width="25%"><strong>64 passing tests</strong><br />Explorer, runtime, export, schema, CF, transforms, and benchmark helpers are covered by the current suite.</td>
-    <td width="25%"><strong>27 generated screenshots</strong><br />Hero, feature-tour, and real-world images in this README are exported from the running app, not mocked manually.</td>
+    <td width="25%"><strong>67 passing tests</strong><br />Explorer, runtime, export, schema, CF, transforms, AI hooks, and SQL explorer helpers are covered by the current suite.</td>
+    <td width="25%"><strong>29 generated screenshots</strong><br />Hero, feature-tour, and real-world images in this README are exported from the running app, not mocked manually.</td>
     <td width="25%"><strong>6 bundled datasets</strong><br />The repo includes demo, compare, multi-file, curvilinear-grid, and real-world climate datasets for reliable validation.</td>
     <td width="25%"><strong>6 reviewer docs</strong><br />Architecture, benchmarks, roadmap, reviewer guide, proposal alignment, and upstream plan make the repo easy to evaluate quickly.</td>
   </tr>
@@ -234,6 +234,20 @@ GeoViews map mode adds a more scientific map surface with coastlines and curvili
 
 The curvilinear demo subset shows that CF-aware metadata is not limited to simple `lat/lon` dimensions: auxiliary `xc/yc` grids are detected, surfaced, and used for map-capable workflows.
 
+### 22. AI Assist
+
+<p align="center">
+  <img src="assets/screenshots/gallery/22_ai_assist.png" alt="AI assist card" width="42%" />
+</p>
+
+The AI assist surface stays intentionally lightweight: dataset-aware prompt suggestions, capability hints, and transform recommendations derived directly from detected coordinates and available tables.
+
+### 23. SQL Explorer
+
+<img src="assets/screenshots/gallery/23_sql_explorer.png" alt="SQL explorer tab" width="100%" />
+
+The SQL explorer is also intentionally lightweight: it runs bounded `SELECT` queries over preview-sized DataFrames so reviewers can inspect table logic without pretending the lab already has a production SQL backend.
+
 ## Real-World Validation: NOAA ERSSTv5
 
 The screenshots below come from the bundled NOAA ERSSTv5 sea-surface-temperature dataset at `assets/sample_data/ersstv5.nc`.
@@ -315,6 +329,8 @@ This repository is not meant to replace upstream `lumen`. It is a companion repo
 - statistics, coverage, comparison, and export panels
 - dedicated time-analysis workflows for rolling mean, anomaly, cumulative, and trend views
 - scientific transforms for rolling mean, anomaly, resample, climatology, spatial mean, and zonal mean
+- lightweight AI assist with dataset-aware prompts and transform suggestions
+- lightweight SQL explorer over bounded DataFrame previews
 - dataset info and CF metadata pane in the explorer rail
 - query cost estimation plus plot/spatial resolution controls
 - source query and pseudo-SQL preview
@@ -338,10 +354,12 @@ This repository is not meant to replace upstream `lumen`. It is a companion repo
 - `Feature Tour` screenshots in this README are generated from the scripted capture flow, not mocked up manually.
 - `Source Query` shows the source-level call shape for the current selection.
 - `Pseudo SQL` gives a familiar mental model for reviewers who think in SQL first.
+- `SQL Explorer` executes bounded `SELECT` queries over preview-sized tables for reviewer-friendly inspection.
 - `Compare` works when the loaded dataset has multiple variables on shared coordinates.
 - `Spatial` view uses detected latitude and longitude columns when available.
 - `Transforms` keep rolling mean, anomaly, resample, climatology, spatial mean, and zonal mean inside xarray before previewing the result.
 - `GeoViews Map` uses a curvilinear-grid sample to demonstrate a more serious scientific visualization path than a generic scatter map.
+- `AI Assist` suggests prompts and transform ideas directly from detected coordinate roles and table structure.
 
 ## Runtime Model
 

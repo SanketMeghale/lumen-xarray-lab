@@ -14,3 +14,4 @@ def test_build_upload_preview(tmp_path):
     assert preview["engine"] == "netcdf"
     assert preview["table"] == "air"
     assert "time" in preview["schema_keys"]
+    assert preview["suggested_prompts"]

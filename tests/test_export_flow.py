@@ -66,6 +66,8 @@ def test_feature_gallery_captures_define_all_expected_views():
         "19_transform_zonal_mean.png",
         "20_geoviews_map.png",
         "21_curvilinear_cf_metadata.png",
+        "22_ai_assist.png",
+        "23_sql_explorer.png",
     ]
 
 

@@ -117,6 +117,7 @@ def capture_dashboard_png(
     width: int = 1600,
     height: int = 1080,
     wait_ms: int = 1800,
+    device_scale_factor: float = 2.0,
 ) -> Path:
     try:
         from playwright.sync_api import sync_playwright
@@ -131,7 +132,7 @@ def capture_dashboard_png(
     html_url = _as_file_url(html_path)
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch()
-        page = browser.new_page(viewport={"width": width, "height": height})
+        page = browser.new_page(viewport={"width": width, "height": height}, device_scale_factor=device_scale_factor)
         page.goto(html_url, wait_until="networkidle")
         page.wait_for_timeout(wait_ms)
         page.screenshot(path=str(target), full_page=True)
@@ -145,6 +146,7 @@ def capture_dashboard_story_frames(
     width: int = 1600,
     height: int = 1200,
     wait_ms: int = 1800,
+    device_scale_factor: float = 2.0,
 ) -> list[Path]:
     try:
         from playwright.sync_api import sync_playwright
@@ -171,7 +173,7 @@ def capture_dashboard_story_frames(
 
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch()
-        page = browser.new_page(viewport={"width": width, "height": height})
+        page = browser.new_page(viewport={"width": width, "height": height}, device_scale_factor=device_scale_factor)
         page.goto(html_url, wait_until="networkidle")
         page.wait_for_timeout(wait_ms)
 
@@ -194,6 +196,7 @@ def capture_gallery_png(
     width: int = 1600,
     height: int = 1800,
     wait_ms: int = 2200,
+    device_scale_factor: float = 2.0,
 ) -> Path:
     try:
         from playwright.sync_api import sync_playwright
@@ -208,7 +211,7 @@ def capture_gallery_png(
     html_url = _as_file_url(html_path)
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch()
-        page = browser.new_page(viewport={"width": width, "height": height})
+        page = browser.new_page(viewport={"width": width, "height": height}, device_scale_factor=device_scale_factor)
         page.goto(html_url, wait_until="load")
         page.wait_for_timeout(wait_ms)
         locator = page.locator(target_selector).first
@@ -302,6 +305,16 @@ def _configure_geoviews_map(controller: object) -> None:
 
 def _configure_curvilinear_metadata(controller: object) -> None:
     _select_table(controller, "Tair")
+
+
+def _configure_sql_explorer(controller: object) -> None:
+    explorer = controller._explorer
+    if len(explorer._sql_examples.options) >= 3:
+        explorer._sql_examples.value = explorer._sql_examples.options[2]
+    elif explorer._sql_examples.options:
+        explorer._sql_examples.value = explorer._sql_examples.options[0]
+    explorer._run_sql_query()
+    explorer._output_tabs.active = 9
 
 
 def _select_table(controller: object, table: str) -> None:
@@ -469,6 +482,17 @@ def feature_gallery_captures(root: str | Path) -> list[FeatureGalleryCapture]:
             filename="21_curvilinear_cf_metadata.png",
             target_selector=".lxl-explorer-dataset-info-card",
             configure=_configure_curvilinear_metadata,
+        ),
+        FeatureGalleryCapture(
+            uri=str(samples / "air_temperature.nc"),
+            filename="22_ai_assist.png",
+            target_selector=".lxl-explorer-ai-card",
+        ),
+        FeatureGalleryCapture(
+            uri=str(samples / "air_temperature.nc"),
+            filename="23_sql_explorer.png",
+            target_selector=".lxl-explorer-output-card",
+            configure=_configure_sql_explorer,
         ),
     ]
 

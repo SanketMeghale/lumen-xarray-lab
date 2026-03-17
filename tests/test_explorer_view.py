@@ -119,10 +119,14 @@ def test_explorer_builds_dataset_info_and_cf_metadata(synthetic_dataset):
 
     dataset_info = explorer._build_dataset_info_html()
     cf_frame = explorer._build_cf_dataframe()
+    ai_summary = explorer._build_ai_summary_html()
+    ai_prompts = explorer._build_ai_prompts_markdown()
 
     assert "Untitled dataset" in dataset_info
     assert "temperature" in dataset_info
     assert set(cf_frame["coordinate"]) == {"time", "lat", "lon"}
+    assert "Capabilities" in ai_summary
+    assert "Suggested prompts" in ai_prompts
 
 
 def test_explorer_builds_comparison_dataframe(multi_table_dataset):
@@ -172,6 +176,16 @@ def test_explorer_geoviews_map_falls_back_cleanly(synthetic_dataset):
     plot = explorer._build_geoviews_map()
 
     assert plot is not None
+
+
+def test_explorer_runs_sql_query(synthetic_dataset):
+    state = DashboardState.from_dataset(synthetic_dataset)
+    explorer = ExplorerView(state=state)
+    explorer._sql_editor.value = 'SELECT lat, AVG("temperature") AS mean_temp FROM "temperature" GROUP BY lat ORDER BY lat'
+    explorer._run_sql_query()
+
+    assert "SQL status" in explorer._sql_result_summary.object
+    assert list(explorer._sql_result_table.value.columns) == ["lat", "mean_temp"]
 
 
 def test_explorer_current_dataframe_normalizes_cftime_preview_values():

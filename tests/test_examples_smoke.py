@@ -41,7 +41,8 @@ def test_ai_upload_demo():
 def test_sql_explorer_demo():
     module = _load_module("sql_explorer_demo.py")
     status = module.get_status()
-    assert status["available"] is False
+    assert status["available"] is True
+    assert status["result_rows"] >= 1
 
 
 def test_dashboard_app():
