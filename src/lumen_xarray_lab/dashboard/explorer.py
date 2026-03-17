@@ -15,7 +15,8 @@ from bokeh.palettes import Blues256
 from bokeh.plotting import figure
 from panel.viewable import Viewer
 
-from ..datasets import apply_query_to_array, estimate_query_cost, sample_table_dataframe
+from ..datasets import apply_query_to_array, estimate_query_cost, make_dataframe_panel_safe, sample_table_dataframe
+from ..transforms import RESAMPLE_RULES, TRANSFORM_AGGREGATIONS, TRANSFORM_OPTIONS, apply_transform, resolve_time_dimension
 from .state import DashboardState
 
 ROLE_ORDER = ("time", "latitude", "longitude", "vertical")
@@ -60,6 +61,13 @@ def _format_scalar(value: Any) -> str:
     return str(value)
 
 
+def _safe_datetime_index(index) -> tuple[pd.Index | pd.DatetimeIndex, str]:
+    try:
+        return pd.to_datetime(index), "datetime"
+    except Exception:
+        return pd.Index([str(value) for value in index], dtype="object"), "categorical"
+
+
 def _resolve_role_column(state: DashboardState, df: pd.DataFrame, role: str) -> str | None:
     preferred = state.coord_map.get(role)
     if preferred in df.columns:
@@ -91,7 +99,7 @@ class ExplorerView(Viewer):
         self._table = pn.widgets.Select(name="Active table", options=self.state.tables, value=self.state.table)
         self._chart_type = pn.widgets.Select(
             name="Chart",
-            options=["line", "scatter", "bar", "histogram", "spatial"],
+            options=["line", "scatter", "bar", "histogram", "spatial", "geoviews map"],
             value="line",
         )
         self._x = pn.widgets.Select(name="X axis", options=[])
@@ -99,6 +107,14 @@ class ExplorerView(Viewer):
         self._limit = pn.widgets.IntSlider(name="Row limit", start=25, end=1000, step=25, value=250)
         self._plot_resolution = pn.widgets.IntSlider(name="Plot resolution", start=25, end=400, step=25, value=150)
         self._spatial_resolution = pn.widgets.IntSlider(name="Spatial bins", start=8, end=48, step=4, value=24)
+        self._transform_mode = pn.widgets.Select(name="Transform", options=list(TRANSFORM_OPTIONS), value="none")
+        self._transform_window = pn.widgets.IntSlider(name="Window", start=2, end=24, step=1, value=6)
+        self._transform_rule = pn.widgets.Select(name="Resample rule", options=list(RESAMPLE_RULES), value="QS-DEC")
+        self._transform_agg = pn.widgets.Select(
+            name="Transform aggregation",
+            options=list(TRANSFORM_AGGREGATIONS),
+            value="mean",
+        )
         self._compare_table = pn.widgets.Select(name="Compare table", options=["None"], value="None")
         self._compare_mode = pn.widgets.Select(name="Compare mode", options=["difference", "ratio"], value="difference")
         self._time_mode = pn.widgets.Select(
@@ -126,6 +142,7 @@ class ExplorerView(Viewer):
         self._coverage_summary = pn.pane.Markdown(css_classes=["lxl-card-markdown"])
         self._compare_summary = pn.pane.Markdown(css_classes=["lxl-card-markdown"])
         self._time_summary = pn.pane.Markdown(css_classes=["lxl-card-markdown"])
+        self._transform_summary = pn.pane.Markdown(css_classes=["lxl-card-markdown"])
         self._status = pn.pane.Markdown(css_classes=["lxl-card-markdown"])
         self._summary = pn.pane.HTML(sizing_mode="stretch_width")
         self._selection_banner = pn.pane.HTML(sizing_mode="stretch_width")
@@ -135,6 +152,7 @@ class ExplorerView(Viewer):
         self._attribute_preview = pn.pane.Markdown(css_classes=["lxl-card-markdown"])
         self._query_cost = pn.pane.HTML(sizing_mode="stretch_width")
         self._query_warning = pn.pane.Markdown(css_classes=["lxl-card-markdown"])
+        self._transform_plot = pn.Column(sizing_mode="stretch_width", min_height=420)
         self._download_csv = pn.widgets.FileDownload(
             label="Current CSV",
             button_type="primary",
@@ -159,6 +177,10 @@ class ExplorerView(Viewer):
             self._limit,
             self._plot_resolution,
             self._spatial_resolution,
+            self._transform_mode,
+            self._transform_window,
+            self._transform_rule,
+            self._transform_agg,
             self._compare_table,
             self._compare_mode,
             self._time_mode,
@@ -217,6 +239,11 @@ class ExplorerView(Viewer):
                 self._limit,
                 self._plot_resolution,
                 self._spatial_resolution,
+                pn.pane.HTML("<div class='lxl-explorer-section-title'>Scientific Transforms</div>"),
+                self._transform_mode,
+                self._transform_window,
+                self._transform_rule,
+                self._transform_agg,
                 sizing_mode="stretch_width",
             ),
             title="Visualization",
@@ -278,6 +305,14 @@ class ExplorerView(Viewer):
                     pn.Row(self._time_mode, self._time_agg, self._time_window, sizing_mode="stretch_width"),
                     self._time_summary,
                     self._time_plot,
+                    sizing_mode="stretch_width",
+                ),
+            ),
+            (
+                "Transforms",
+                pn.Column(
+                    self._transform_summary,
+                    self._transform_plot,
                     sizing_mode="stretch_width",
                 ),
             ),
@@ -519,7 +554,7 @@ class ExplorerView(Viewer):
         lat_unique = int(spatial["__lat__"].nunique())
         lon_unique = int(spatial["__lon__"].nunique())
         if len(spatial) <= bins * bins or (lat_unique <= bins and lon_unique <= bins):
-            return spatial
+            return spatial[["__lat__", "__lon__", "__value__"]]
 
         lat_bins = min(bins, max(lat_unique, 1))
         lon_bins = min(bins, max(lon_unique, 1))
@@ -532,7 +567,7 @@ class ExplorerView(Viewer):
         )
         grouped["__lat__"] = grouped["__lat_bin__"].apply(lambda interval: float(interval.mid) if pd.notna(interval) else np.nan)
         grouped["__lon__"] = grouped["__lon_bin__"].apply(lambda interval: float(interval.mid) if pd.notna(interval) else np.nan)
-        return grouped.dropna(subset=["__lat__", "__lon__", "__value__"])
+        return grouped.drop(columns=["__lat_bin__", "__lon_bin__"]).dropna(subset=["__lat__", "__lon__", "__value__"])
 
     def _time_dimension(self) -> str | None:
         preferred = self.state.coord_map.get("time")
@@ -569,7 +604,15 @@ class ExplorerView(Viewer):
         if series.empty:
             return pd.DataFrame(), {"error": "Time analysis produced an empty series for the current selection."}
 
-        frame = pd.DataFrame({"time": pd.to_datetime(series.index), "raw": series.to_numpy(dtype=float)})
+        time_index, time_axis_type = _safe_datetime_index(series.index)
+        frame = pd.DataFrame(
+            {
+                "time": time_index,
+                "time_label": [str(value) for value in series.index],
+                "time_step": np.arange(len(series), dtype=float),
+                "raw": series.to_numpy(dtype=float),
+            }
+        )
         mode = self._time_mode.value
         frame["value"] = frame["raw"]
         trend_slope = None
@@ -596,11 +639,12 @@ class ExplorerView(Viewer):
             "mode": mode,
             "aggregation": self._time_agg.value,
             "points": int(len(series)),
-            "start": _format_scalar(frame["time"].min()) if not frame.empty else "n/a",
-            "end": _format_scalar(frame["time"].max()) if not frame.empty else "n/a",
+            "start": _format_scalar(series.index[0]) if len(series) else "n/a",
+            "end": _format_scalar(series.index[-1]) if len(series) else "n/a",
             "mean": float(series.mean()),
             "std": float(series.std()) if len(series) > 1 else 0.0,
             "trend_slope": trend_slope,
+            "axis_type": time_axis_type,
         }
 
     def _build_time_analysis_output(self) -> tuple[str, pn.viewable.Viewable]:
@@ -627,17 +671,240 @@ class ExplorerView(Viewer):
             height=380,
             sizing_mode="stretch_width",
             title=f"Time analysis: {self._table.value}",
-            x_axis_type="datetime",
+            x_axis_type="datetime" if summary["axis_type"] == "datetime" else "auto",
         )
-        source = ColumnDataSource(frame.assign(__time__=frame["time"], __value__=frame["value"], __raw__=frame["raw"]))
-        plot.line("__time__", "__value__", line_width=3, color="#1976d2", source=source)
-        plot.scatter("__time__", "__value__", size=6, color="#64b5f6", line_color="#1565c0", source=source)
+        x_column = "__time__" if summary["axis_type"] == "datetime" else "__time_step__"
+        source = ColumnDataSource(
+            frame.assign(
+                __time__=frame["time"],
+                __time_step__=frame["time_step"],
+                __time_label__=frame["time_label"],
+                __value__=frame["value"],
+                __raw__=frame["raw"],
+            )
+        )
+        plot.line(x_column, "__value__", line_width=3, color="#1976d2", source=source)
+        plot.scatter(x_column, "__value__", size=6, color="#64b5f6", line_color="#1565c0", source=source)
         if "trend" in frame.columns:
-            trend_source = ColumnDataSource(frame.assign(__time__=frame["time"], __trend__=frame["trend"]))
-            plot.line("__time__", "__trend__", line_width=2.5, color="#ef6c00", line_dash="dashed", source=trend_source)
-        plot.add_tools(HoverTool(tooltips=[("time", "@__time__{%F}"), ("value", "@__value__{0.000}")], formatters={"@__time__": "datetime"}))
+            trend_source = ColumnDataSource(
+                frame.assign(
+                    __time__=frame["time"],
+                    __time_step__=frame["time_step"],
+                    __time_label__=frame["time_label"],
+                    __trend__=frame["trend"],
+                )
+            )
+            plot.line(x_column, "__trend__", line_width=2.5, color="#ef6c00", line_dash="dashed", source=trend_source)
+        if summary["axis_type"] == "datetime":
+            hover = HoverTool(tooltips=[("time", "@__time__{%F}"), ("value", "@__value__{0.000}")], formatters={"@__time__": "datetime"})
+        else:
+            hover = HoverTool(tooltips=[("time", "@__time_label__"), ("value", "@__value__{0.000}")])
+            plot.xaxis.axis_label = "time step"
+        plot.add_tools(hover)
         self._style_plot(plot)
         return "\n".join(lines), plot
+
+    def _transform_result(self):
+        try:
+            result = apply_transform(
+                self._current_array(),
+                self.state.coord_map,
+                transform=self._transform_mode.value,
+                window=self._transform_window.value,
+                aggregation=self._transform_agg.value,
+                resample_rule=self._transform_rule.value,
+            )
+        except Exception as exc:
+            return None, str(exc)
+        return result, None
+
+    def _transform_display_frame(self, arr) -> tuple[pd.DataFrame, str | None]:
+        if arr.ndim == 0:
+            return pd.DataFrame({self._table.value: [arr.item()]}), None
+
+        working = arr
+        time_dim = resolve_time_dimension(arr, self.state.coord_map)
+        lat_dim = next((dim for dim in arr.dims if "lat" in dim.lower()), None)
+        preferred_dims = [dim for dim in (time_dim, "month", lat_dim) if dim in arr.dims]
+        focus_dim = preferred_dims[0] if preferred_dims else arr.dims[0]
+        reduce_dims = [dim for dim in working.dims if dim != focus_dim]
+        if reduce_dims:
+            reducer = {
+                "mean": lambda data, dims: data.mean(dim=dims, skipna=True),
+                "median": lambda data, dims: data.median(dim=dims, skipna=True),
+                "min": lambda data, dims: data.min(dim=dims, skipna=True),
+                "max": lambda data, dims: data.max(dim=dims, skipna=True),
+                "sum": lambda data, dims: data.sum(dim=dims, skipna=True),
+            }[self._transform_agg.value]
+            working = reducer(working, reduce_dims)
+
+        frame = make_dataframe_panel_safe(working.to_dataframe(name=self._table.value).reset_index())
+        ordered = [*working.coords, self._table.value]
+        ordered = [col for col in ordered if col in frame.columns]
+        return frame[ordered], focus_dim
+
+    def _build_transform_output(self) -> tuple[str, pn.viewable.Viewable]:
+        result, error = self._transform_result()
+        if error is not None or result is None:
+            message = error or "Transform could not be computed."
+            return f"**Transform error:** {message}", pn.pane.Markdown(message)
+
+        array = result.array
+        summary = result.summary
+        frame, focus_dim = self._transform_display_frame(array)
+        lines = [
+            f"**Transform:** `{summary['transform']}`",
+            f"**Dims before / after:** `{summary['dims_before']}` -> `{summary['dims_after']}`",
+            f"**Shape before / after:** `{summary['shape_before']}` -> `{summary['shape_after']}`",
+            f"**Aggregation:** `{summary['aggregation']}`",
+            f"**Units:** `{summary.get('units') or 'n/a'}`",
+        ]
+        if "window" in summary:
+            lines.append(f"**Window:** `{summary['window']}`")
+        if "rule" in summary:
+            lines.append(f"**Resample rule:** `{summary['rule']}`")
+        if "baseline" in summary:
+            lines.append(f"**Baseline:** `{summary['baseline']}`")
+        if "reduced_dims" in summary:
+            lines.append(f"**Reduced dims:** `{summary['reduced_dims']}`")
+
+        if frame.empty:
+            return "\n".join(lines + ["**Result:** empty"]), pn.pane.Markdown("Transform result is empty.")
+
+        if focus_dim is None or focus_dim not in frame.columns:
+            return "\n".join(lines + [f"**Scalar result:** `{_format_scalar(frame[self._table.value].iloc[0])}`"]), pn.widgets.Tabulator(frame, page_size=5)
+
+        x_label = focus_dim
+        y_label = self._table.value
+        axis_type = "datetime" if pd.api.types.is_datetime64_any_dtype(frame[focus_dim]) else "auto"
+        plot = figure(
+            height=380,
+            sizing_mode="stretch_width",
+            title=f"Transform result: {summary['transform']}",
+            x_axis_type=axis_type,
+            x_axis_label=x_label,
+            y_axis_label=y_label,
+        )
+        ordered = frame.sort_values(focus_dim) if focus_dim in frame.columns else frame
+        source = ColumnDataSource(ordered.assign(__x__=ordered[focus_dim], __y__=ordered[self._table.value]))
+        if focus_dim == "month":
+            labels = [str(int(value)) for value in ordered[focus_dim]]
+            plot = figure(
+                height=380,
+                sizing_mode="stretch_width",
+                title=f"Transform result: {summary['transform']}",
+                x_range=labels,
+                x_axis_label=x_label,
+                y_axis_label=y_label,
+            )
+            source = ColumnDataSource(ordered.assign(__x__=labels, __y__=ordered[self._table.value]))
+            plot.vbar(x="__x__", top="__y__", width=0.8, color="#1976d2", source=source)
+        else:
+            plot.line("__x__", "__y__", line_width=3, color="#1976d2", source=source)
+            plot.scatter("__x__", "__y__", size=7, color="#64b5f6", line_color="#1565c0", source=source)
+        plot.add_tools(HoverTool(tooltips=[(x_label, "@__x__"), (y_label, "@__y__")]))
+        self._style_plot(plot)
+        return "\n".join(lines), plot
+
+    def _spatial_array_payload(self):
+        value_col = self._y.value if self._y.value == self._table.value else self._table.value
+        arr = self._current_array()
+        lat_name = self.state.coord_map.get("latitude")
+        lon_name = self.state.coord_map.get("longitude")
+        if lat_name not in arr.coords or lon_name not in arr.coords:
+            return None, "Spatial plotting requires detected latitude and longitude coordinates."
+
+        lat_coord = arr.coords[lat_name]
+        lon_coord = arr.coords[lon_name]
+        spatial_dims: list[str] = []
+        for coord in (lat_coord, lon_coord):
+            for dim in coord.dims:
+                if dim in arr.dims and dim not in spatial_dims:
+                    spatial_dims.append(dim)
+        if not spatial_dims:
+            return None, "Spatial plotting requires latitude and longitude dimensions."
+
+        working = arr
+        for dim in list(working.dims):
+            if dim not in spatial_dims:
+                working = working.isel({dim: 0})
+        working = working.squeeze(drop=True)
+        if working.ndim == 0:
+            return None, "Spatial plotting needs at least one spatial slice after filtering."
+
+        frame = working.to_dataframe(name=value_col).reset_index()
+        if lat_name not in frame.columns or lon_name not in frame.columns:
+            return None, "Spatial coordinates could not be materialized for the current selection."
+        frame["__lat__"] = pd.to_numeric(frame[lat_name], errors="coerce")
+        frame["__lon__"] = pd.to_numeric(frame[lon_name], errors="coerce")
+        frame["__value__"] = pd.to_numeric(frame[value_col], errors="coerce")
+        frame = frame.dropna(subset=["__lat__", "__lon__", "__value__"])
+        if frame.empty:
+            return None, "Spatial plotting requires numeric latitude, longitude, and values."
+
+        return {
+            "array": working,
+            "frame": frame,
+            "lat_name": lat_name,
+            "lon_name": lon_name,
+            "value_name": value_col,
+            "lat_coord": lat_coord,
+            "lon_coord": lon_coord,
+        }, None
+
+    def _build_geoviews_map(self):
+        payload, error = self._spatial_array_payload()
+        if error is not None or payload is None:
+            return pn.pane.Markdown(error or "GeoViews map could not be built.")
+
+        try:
+            import cartopy.crs as ccrs
+            import geoviews as gv
+            import holoviews as hv
+        except Exception as exc:
+            return pn.pane.Markdown(
+                "GeoViews dependencies are not available in this environment. "
+                f"Install `geoviews`, `holoviews`, and `cartopy` to enable this mode. `{exc}`"
+            )
+
+        gv.extension("bokeh")
+        hv.extension("bokeh")
+
+        array = payload["array"]
+        lat_coord = payload["lat_coord"]
+        lon_coord = payload["lon_coord"]
+        value_name = payload["value_name"]
+
+        try:
+            if lat_coord.ndim == 2 or lon_coord.ndim == 2:
+                element = gv.QuadMesh(
+                    (lon_coord.values, lat_coord.values, array.values),
+                    kdims=[payload["lon_name"], payload["lat_name"]],
+                    vdims=[value_name],
+                    crs=ccrs.PlateCarree(),
+                )
+            else:
+                element = gv.Image(
+                    (lon_coord.values, lat_coord.values, array.values),
+                    kdims=[payload["lon_name"], payload["lat_name"]],
+                    vdims=[value_name],
+                    crs=ccrs.PlateCarree(),
+                )
+            map_view = element.opts(
+                cmap="Viridis",
+                colorbar=True,
+                tools=["hover"],
+                width=900,
+                height=380,
+                responsive=True,
+            )
+            if hasattr(gv, "feature"):
+                coastline = getattr(gv.feature, "coastline", None)
+                if coastline is not None:
+                    map_view = coastline.opts(line_color="#334155", line_width=1) * map_view
+            return pn.panel(map_view, sizing_mode="stretch_width")
+        except Exception as exc:
+            return pn.pane.Markdown(f"GeoViews map build failed for the current selection. `{exc}`")
 
     def _build_dataset_info_html(self) -> str:
         arr = self.state.dataset[self._table.value]
@@ -659,6 +926,7 @@ class ExplorerView(Viewer):
             f"<div><span class='lxl-explorer-label'>Table</span><strong>{escape(self._table.value)}</strong><em>dims: {escape(dims)}</em></div>"
             f"<div><span class='lxl-explorer-label'>Units</span><strong>{units}</strong><em>standard_name: {standard_name}</em></div>"
             f"<div><span class='lxl-explorer-label'>Queryable coords</span><strong>{escape(', '.join(table_meta.get('queryable_coords', [])) or 'none')}</strong><em>roles: {escape(roles)}</em></div>"
+            f"<div><span class='lxl-explorer-label'>Load mode</span><strong>{escape(self.state.source_mode)}</strong><em>{escape(', '.join(self.state.source_uris[:2]) or 'in-memory dataset')}</em></div>"
             f"<div><span class='lxl-explorer-label'>Full flatten rows</span><strong>{full_cost['full_rows']:,}</strong><em>approx {full_cost['approx_dataframe_mb']:.2f} MB if fully materialized</em></div>"
             f"<div><span class='lxl-explorer-label'>Runtime</span><strong>{escape(self.state.runtime_source)}</strong><em>{escape(str(self.state.runtime_details.get('source_class', 'unknown')))}</em></div>"
             "</div>"
@@ -677,6 +945,8 @@ class ExplorerView(Viewer):
                     "axis": spec.get("axis"),
                     "dtype": spec.get("dtype"),
                     "size": spec.get("size"),
+                    "queryable": spec.get("queryable"),
+                    "curvilinear": spec.get("curvilinear"),
                 }
             )
         return pd.DataFrame(rows)
@@ -702,12 +972,14 @@ class ExplorerView(Viewer):
         )
 
     def current_dataframe(self) -> pd.DataFrame:
-        return sample_table_dataframe(
-            self.state.dataset,
-            self._table.value,
-            query=self._collect_query(),
-            limit=self._limit.value,
-            filterable_coords=getattr(self.state.source, "filterable_coords", None),
+        return make_dataframe_panel_safe(
+            sample_table_dataframe(
+                self.state.dataset,
+                self._table.value,
+                query=self._collect_query(),
+                limit=self._limit.value,
+                filterable_coords=getattr(self.state.source, "filterable_coords", None),
+            )
         )
 
     def source_query_text(self) -> str:
@@ -803,12 +1075,14 @@ class ExplorerView(Viewer):
             return "Select another table to compare on shared coordinates.", pd.DataFrame()
 
         try:
-            other_df = sample_table_dataframe(
-                self.state.dataset,
-                other_table,
-                query=self._collect_query(),
-                limit=self._limit.value,
-                filterable_coords=getattr(self.state.source, "filterable_coords", None),
+            other_df = make_dataframe_panel_safe(
+                sample_table_dataframe(
+                    self.state.dataset,
+                    other_table,
+                    query=self._collect_query(),
+                    limit=self._limit.value,
+                    filterable_coords=getattr(self.state.source, "filterable_coords", None),
+                )
             )
         except Exception as exc:  # pragma: no cover - defensive UI path
             return f"Comparison query failed for `{other_table}`: {exc}", pd.DataFrame()
@@ -872,12 +1146,15 @@ class ExplorerView(Viewer):
         if df.empty:
             return pn.pane.Markdown("No chartable data for the current selection.")
 
-        if chart_type == "spatial":
-            lat_col, lon_col = self._resolve_spatial_columns(df)
-            if lat_col is None or lon_col is None:
-                return pn.pane.Markdown("Spatial view requires latitude and longitude coordinates in the current table.")
+        if chart_type == "geoviews map":
+            return self._build_geoviews_map()
 
-            spatial = self._aggregate_spatial_dataframe(df, lat_col, lon_col, y)
+        if chart_type == "spatial":
+            payload, error = self._spatial_array_payload()
+            if error is not None or payload is None:
+                return pn.pane.Markdown(error or "Spatial view could not be built.")
+
+            spatial = self._aggregate_spatial_dataframe(payload["frame"], "__lat__", "__lon__", "__value__")
             if spatial.empty:
                 return pn.pane.Markdown("Spatial view requires numeric latitude, longitude, and value columns.")
 
@@ -890,9 +1167,9 @@ class ExplorerView(Viewer):
             plot = figure(
                 height=380,
                 sizing_mode="stretch_width",
-                title=f"Spatial view: {y}",
-                x_axis_label=lon_col,
-                y_axis_label=lat_col,
+                title=f"Spatial view: {payload['value_name']}",
+                x_axis_label=payload["lon_name"],
+                y_axis_label=payload["lat_name"],
             )
             plot.scatter(
                 "__lon__",
@@ -907,9 +1184,9 @@ class ExplorerView(Viewer):
             plot.add_tools(
                 HoverTool(
                     tooltips=[
-                        (lon_col, "@__lon__"),
-                        (lat_col, "@__lat__"),
-                        (y, "@__value__"),
+                        (payload["lon_name"], "@__lon__"),
+                        (payload["lat_name"], "@__lat__"),
+                        (payload["value_name"], "@__value__"),
                     ]
                 )
             )
@@ -917,7 +1194,7 @@ class ExplorerView(Viewer):
                 ColorBar(
                     color_mapper=mapper,
                     ticker=BasicTicker(desired_num_ticks=6),
-                    title=y,
+                    title=payload["value_name"],
                 ),
                 "right",
             )
@@ -1027,6 +1304,7 @@ class ExplorerView(Viewer):
             f"<div><span class='lxl-explorer-label'>Rows</span><strong>{len(df)}</strong></div>"
             f"<div><span class='lxl-explorer-label'>X / Y</span><strong>{self._x.value} / {self._y.value}</strong></div>"
             f"<div><span class='lxl-explorer-label'>Chart</span><strong>{self._chart_type.value}</strong></div>"
+            f"<div><span class='lxl-explorer-label'>Transform</span><strong>{self._transform_mode.value}</strong></div>"
             f"<div><span class='lxl-explorer-label'>Spatial</span><strong>{spatial_label}</strong></div>"
             f"<div><span class='lxl-explorer-label'>Compare</span><strong>{compare_label}</strong></div>"
             "</div>"
@@ -1048,6 +1326,8 @@ class ExplorerView(Viewer):
     def _update_outputs(self, event=None) -> None:
         self._compare_mode.disabled = self._compare_table.value == "None"
         self._time_window.disabled = self._time_mode.value != "rolling mean"
+        self._transform_window.disabled = self._transform_mode.value != "rolling mean"
+        self._transform_rule.disabled = self._transform_mode.value != "resample"
 
         df = self.current_dataframe()
         query_cost = self.current_query_cost()
@@ -1055,6 +1335,7 @@ class ExplorerView(Viewer):
         coverage_df = self._build_coverage_dataframe(df)
         compare_summary, compare_df = self._build_comparison_dataframe(df)
         time_summary, time_plot = self._build_time_analysis_output()
+        transform_summary, transform_plot = self._build_transform_output()
 
         filter_count = len(self._collect_query())
         compare_label = self._compare_table.value if self._compare_table.value != "None" else "off"
@@ -1084,6 +1365,7 @@ class ExplorerView(Viewer):
         self._status.object = (
             f"**Rows returned:** {len(df)}  \n"
             f"**Chart:** `{self._chart_type.value}`  \n"
+            f"**Transform:** `{self._transform_mode.value}`  \n"
             f"**X / Y:** `{self._x.value}` / `{self._y.value}`  \n"
             f"**Compare:** `{compare_label}`  \n"
             f"**Estimated full rows:** `{query_cost['selected_rows']:,}`"
@@ -1091,6 +1373,7 @@ class ExplorerView(Viewer):
         self._data.value = df
         self._stats.value = stats_df
         self._time_summary.object = time_summary
+        self._transform_summary.object = transform_summary
         self._coverage_summary.object = (
             f"**Selection coverage:** {len(df)} of {self._table_row_count(self._table.value)} rows "
             f"for `{self._table.value}`."
@@ -1102,6 +1385,7 @@ class ExplorerView(Viewer):
         self._sql.object = f"```sql\n{self.sql_preview_text()}\n```"
         self._chart.objects = [pn.panel(self._build_plot(df), sizing_mode="stretch_width")]
         self._time_plot.objects = [pn.panel(time_plot, sizing_mode="stretch_width")]
+        self._transform_plot.objects = [pn.panel(transform_plot, sizing_mode="stretch_width")]
 
         slug = self._table.value.replace(" ", "_")
         self._download_csv.filename = f"{slug}_selection.csv"

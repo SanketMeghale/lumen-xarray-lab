@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import cftime
 import json
 
+import numpy as np
+import xarray as xr
 from bokeh.models.layouts import LayoutDOM
 
 from lumen_xarray_lab.dashboard.explorer import ExplorerView
@@ -98,6 +101,18 @@ def test_explorer_builds_time_analysis_and_query_cost(synthetic_dataset):
     assert cost["risk"] in {"low", "medium", "high"}
 
 
+def test_explorer_builds_transform_output(synthetic_dataset):
+    state = DashboardState.from_dataset(synthetic_dataset)
+    explorer = ExplorerView(state=state)
+    explorer._transform_mode.value = "spatial mean"
+
+    summary, plot = explorer._build_transform_output()
+
+    assert "Transform" in summary
+    assert "spatial mean" in summary
+    assert isinstance(plot, LayoutDOM)
+
+
 def test_explorer_builds_dataset_info_and_cf_metadata(synthetic_dataset):
     state = DashboardState.from_dataset(synthetic_dataset)
     explorer = ExplorerView(state=state)
@@ -148,3 +163,46 @@ def test_explorer_uses_dataset_sampling_instead_of_source_get(synthetic_dataset)
 
     assert not df.empty
     assert "temperature" in df.columns
+
+
+def test_explorer_geoviews_map_falls_back_cleanly(synthetic_dataset):
+    state = DashboardState.from_dataset(synthetic_dataset)
+    explorer = ExplorerView(state=state)
+
+    plot = explorer._build_geoviews_map()
+
+    assert plot is not None
+
+
+def test_explorer_current_dataframe_normalizes_cftime_preview_values():
+    dataset = xr.Dataset(
+        data_vars={
+            "Tair": (("time", "y", "x"), np.arange(8.0).reshape(2, 2, 2)),
+        },
+        coords={
+            "time": xr.DataArray(
+                [cftime.DatetimeNoLeap(1980, 1, 1), cftime.DatetimeNoLeap(1980, 2, 1)],
+                dims=("time",),
+                attrs={"standard_name": "time"},
+            ),
+            "y": np.array([0, 1]),
+            "x": np.array([0, 1]),
+            "yc": xr.DataArray(
+                np.array([[42.0, 42.5], [41.5, 42.0]]),
+                dims=("y", "x"),
+                attrs={"units": "degrees_north", "long_name": "latitude of grid cell center"},
+            ),
+            "xc": xr.DataArray(
+                np.array([[210.0, 211.0], [210.5, 211.5]]),
+                dims=("y", "x"),
+                attrs={"units": "degrees_east", "long_name": "longitude of grid cell center"},
+            ),
+        },
+    )
+
+    state = DashboardState.from_dataset(dataset)
+    explorer = ExplorerView(state=state)
+    frame = explorer.current_dataframe()
+
+    assert "time" in frame.columns
+    assert not any(type(value).__module__.startswith("cftime") for value in frame["time"].dropna())

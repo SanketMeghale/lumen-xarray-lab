@@ -34,6 +34,10 @@ test = [
   "pytest>=8.0"
 ]
 demo = [
+  "cartopy",
+  "geoviews",
+  "holoviews",
+  "hvplot",
   "imageio",
   "netcdf4",
   "playwright",

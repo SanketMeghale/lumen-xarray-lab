@@ -1,0 +1,19 @@
+{
+  "generated_at_utc": "2026-03-17T07:04:16.239889+00:00",
+  "platform": "Windows-11-10.0.22000-SP0",
+  "python": "3.13.5",
+  "cpu_count": 4,
+  "command": "python benchmarks/multifile_loading.py",
+  "memory_gb": 7.88,
+  "single_path": "C:\\Users\\Admin\\Desktop\\lumen-xarray-lab\\assets\\sample_data\\air_temperature.nc",
+  "multi_path": "C:\\Users\\Admin\\Desktop\\lumen-xarray-lab\\assets\\sample_data\\multi_air_temperature\\*.nc",
+  "single_open_seconds": 0.5291,
+  "multi_open_seconds": 1.4488,
+  "single_tables": [
+    "air"
+  ],
+  "multi_tables": [
+    "air"
+  ],
+  "multifile_note": "Multi-file loading tries open_mfdataset first and falls back to manual combine_by_coords/concat when needed."
+}

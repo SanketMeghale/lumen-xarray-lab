@@ -50,6 +50,8 @@ class DashboardState:
     coord_metadata: dict[str, dict[str, Any]]
     runtime_source: str
     runtime_details: dict[str, Any]
+    source_mode: str
+    source_uris: list[str]
 
     @classmethod
     def from_dataset(cls, dataset: xr.Dataset, table: str | None = None, **source_kwargs: Any) -> "DashboardState":
@@ -89,6 +91,12 @@ class DashboardState:
             filterable_coords=getattr(source, "filterable_coords", None),
         )
         runtime_info = resolve_runtime_source_info()
+        source_class = source.__class__.__name__
+        runtime_mode = "fallback" if source_class == "LabXarraySourceAdapter" else runtime_info.mode
+        runtime_label = "lab-adapter" if source_class == "LabXarraySourceAdapter" else runtime_info.backend_label
+        runtime_details = runtime_info.to_dict()
+        runtime_details["source_class"] = source_class
+        runtime_details["mode"] = runtime_mode
         return cls(
             dataset=source_dataset,
             source=source,
@@ -100,8 +108,10 @@ class DashboardState:
             dimension_info=dimension_info,
             coord_map=detect_coordinates(source_dataset),
             coord_metadata=coord_metadata,
-            runtime_source=runtime_info.backend_label,
-            runtime_details=runtime_info.to_dict(),
+            runtime_source=runtime_label,
+            runtime_details=runtime_details,
+            source_mode=getattr(source, "source_mode", "in-memory" if dataset_hint is not None else "single-file"),
+            source_uris=list(getattr(source, "source_uris", []) or []),
         )
 
     def close(self) -> None:

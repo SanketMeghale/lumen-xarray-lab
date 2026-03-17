@@ -57,6 +57,15 @@ def test_feature_gallery_captures_define_all_expected_views():
         "10_time_analysis.png",
         "11_dataset_info.png",
         "12_query_planning.png",
+        "13_multifile_loading.png",
+        "14_transform_rolling_mean.png",
+        "15_transform_anomaly.png",
+        "16_transform_resample.png",
+        "17_transform_climatology.png",
+        "18_transform_spatial_mean.png",
+        "19_transform_zonal_mean.png",
+        "20_geoviews_map.png",
+        "21_curvilinear_cf_metadata.png",
     ]
 
 

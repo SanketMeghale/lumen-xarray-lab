@@ -1,0 +1,17 @@
+{
+  "generated_at_utc": "2026-03-17T07:00:11.048817+00:00",
+  "platform": "Windows-11-10.0.22000-SP0",
+  "python": "3.13.5",
+  "cpu_count": 4,
+  "command": "python benchmarks/transform_timings.py",
+  "memory_gb": 7.88,
+  "dataset": "ersstv5",
+  "timings_seconds": {
+    "rolling_mean": 1.7886,
+    "anomaly": 0.2499,
+    "resample": 0.2403,
+    "climatology": 0.1266,
+    "spatial_mean": 0.0933,
+    "zonal_mean": 0.0785
+  }
+}

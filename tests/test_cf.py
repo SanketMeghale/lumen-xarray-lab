@@ -77,3 +77,31 @@ def test_get_coordinate_metadata_exposes_detection_details(synthetic_dataset):
     assert meta["time"]["dtype"].startswith("datetime64")
     assert meta["time"]["detection_score"] >= 8
     assert meta["time"]["detection_reasons"]
+
+
+def test_get_coordinate_metadata_marks_curvilinear_map_candidates():
+    dataset = xr.Dataset(
+        data_vars={
+            "sst": (("y", "x"), np.arange(6.0).reshape(2, 3)),
+        },
+        coords={
+            "yc": xr.DataArray(
+                np.array([[42.0, 42.5, 43.0], [41.0, 41.5, 42.0]]),
+                dims=("y", "x"),
+                attrs={"long_name": "latitude of grid cell center", "units": "degrees_north"},
+            ),
+            "xc": xr.DataArray(
+                np.array([[210.0, 211.0, 212.0], [210.5, 211.5, 212.5]]),
+                dims=("y", "x"),
+                attrs={"long_name": "longitude of grid cell center", "units": "degrees_east"},
+            ),
+        },
+    )
+
+    coords = detect_coordinates(dataset)
+    meta = get_coordinate_metadata(dataset)
+
+    assert coords["latitude"] == "yc"
+    assert coords["longitude"] == "xc"
+    assert meta["yc"]["curvilinear"] is True
+    assert meta["xc"]["map_candidate"] is True

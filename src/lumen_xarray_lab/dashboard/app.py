@@ -444,7 +444,7 @@ class DashboardController:
         self._path_input = pn.widgets.TextInput(
             name="Path or URI",
             value=uri or "",
-            placeholder=r"C:\data\climate.nc or /path/to/store.zarr",
+            placeholder=r"C:\data\climate.nc, C:\data\split\*.nc, or /path/to/store.zarr",
             sizing_mode="stretch_width",
         )
         self._format_select = pn.widgets.Select(
@@ -500,7 +500,7 @@ class DashboardController:
                     "\n".join(
                         [
                             "### Load From Path",
-                            "Use a local file path, remote URI, or a `.zarr` directory path.",
+                            "Use a local file path, remote URI, glob like `data/*.nc`, or a `.zarr` directory path.",
                         ]
                     ),
                     css_classes=["lxl-card-markdown"],
@@ -512,7 +512,7 @@ class DashboardController:
                     "\n".join(
                         [
                             "### Bundled Samples",
-                            "Use a saved local sample to test the explorer quickly.",
+                            "Use a saved local sample, including a split multi-file example, to test the explorer quickly.",
                         ]
                     ),
                     css_classes=["lxl-card-markdown"],
@@ -576,6 +576,21 @@ class DashboardController:
         return bool(parsed.scheme and parsed.scheme not in ("file",) and not (len(parsed.scheme) == 1 and candidate[1:2] == ":"))
 
     def _normalize_uri_candidate(self, candidate: str) -> str:
+        if any(token in candidate for token in ("*", "?", "[", "]", "\n", ";")):
+            normalized_parts = []
+            for raw_part in candidate.replace("\r\n", "\n").splitlines():
+                for part in [piece.strip() for piece in raw_part.split(";") if piece.strip()]:
+                    path = Path(part).expanduser()
+                    if path.is_absolute() or self._is_remote_uri(part) or part.startswith("file://"):
+                        normalized_parts.append(str(path) if path.is_absolute() else part)
+                        continue
+                    repo_relative = (self._repo_root / path).resolve()
+                    if repo_relative.parent.exists():
+                        normalized_parts.append(str(repo_relative))
+                        continue
+                    cwd_relative = (Path.cwd() / path).resolve()
+                    normalized_parts.append(str(cwd_relative))
+            return ";".join(normalized_parts)
         if self._is_remote_uri(candidate) or candidate.startswith("file://"):
             return candidate
         path = Path(candidate).expanduser()
@@ -599,6 +614,7 @@ class DashboardController:
             [
                 f"**Current dataset:** {dataset_title}",
                 f"**Loaded from:** {source_label}",
+                f"**Load mode:** `{state.source_mode}`",
                 f"**Tables:** {', '.join(state.tables)}",
                 f"**Runtime:** `{state.runtime_source}`",
             ]
@@ -687,7 +703,13 @@ class DashboardController:
             self._set_status("**Load failed:** enter a dataset path or URI first.")
             return
         resolved = self._normalize_uri_candidate(candidate)
-        if not self._is_remote_uri(resolved) and not resolved.startswith("file://") and not Path(resolved).exists():
+        is_multi_pattern = any(token in resolved for token in ("*", "?", "[", "]", "\n", ";"))
+        if (
+            not is_multi_pattern
+            and not self._is_remote_uri(resolved)
+            and not resolved.startswith("file://")
+            and not Path(resolved).exists()
+        ):
             self._set_status(f"**Load failed:** `{resolved}` does not exist.")
             return
         try:

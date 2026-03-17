@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
+from glob import glob
 from pathlib import Path
 from math import prod
 import sys
@@ -9,6 +10,8 @@ from typing import Any
 import numpy as np
 import pandas as pd
 import xarray as xr
+
+from .cf import detect_coordinates
 
 
 @dataclass(frozen=True)
@@ -95,6 +98,78 @@ def _iter_queryable_coords(arr: xr.DataArray, filterable_coords: list[str] | Non
     ]
 
 
+def _selected_auxiliary_coords(dataset: xr.Dataset, arr: xr.DataArray) -> list[str]:
+    role_map = detect_coordinates(dataset)
+    selected = []
+    for coord_name in role_map.values():
+        if coord_name is None or coord_name not in arr.coords:
+            continue
+        coord = arr.coords[coord_name]
+        if coord_name in selected or coord.ndim == 1:
+            continue
+        if all(dim in arr.dims for dim in coord.dims):
+            selected.append(coord_name)
+    return selected
+
+
+def _frame_columns_for_array(
+    dataset: xr.Dataset,
+    arr: xr.DataArray,
+    table: str,
+    filterable_coords: list[str] | None = None,
+) -> list[str]:
+    queryable = _iter_queryable_coords(arr, filterable_coords)
+    auxiliary = _selected_auxiliary_coords(dataset, arr)
+    ordered = [*queryable, *auxiliary, table]
+    seen: list[str] = []
+    for column in ordered:
+        if column not in seen:
+            seen.append(column)
+    return seen
+
+
+def _looks_like_multi_input(uri: str) -> bool:
+    return any(token in uri for token in ("*", "?", "[", "]", "\n", ";"))
+
+
+def _expand_input_uris(uri: str) -> list[str]:
+    candidates = [part.strip() for part in str(uri).replace("\r\n", "\n").splitlines() if part.strip()]
+    if not candidates:
+        candidates = [str(uri).strip()]
+
+    expanded: list[str] = []
+    for candidate in candidates:
+        pieces = [piece.strip() for piece in candidate.split(";") if piece.strip()]
+        for piece in pieces or [candidate]:
+            if any(token in piece for token in ("*", "?", "[", "]")):
+                matches = sorted(glob(piece))
+                expanded.extend(matches or [piece])
+            else:
+                expanded.append(piece)
+    return expanded
+
+
+def _combine_opened_datasets(datasets: list[xr.Dataset]) -> xr.Dataset:
+    if len(datasets) == 1:
+        return datasets[0]
+    try:
+        return xr.combine_by_coords(
+            datasets,
+            combine_attrs="drop_conflicts",
+            data_vars="minimal",
+            coords="minimal",
+            compat="override",
+        )
+    except Exception:
+        shared_dims = set(datasets[0].dims)
+        for ds in datasets[1:]:
+            shared_dims &= set(ds.dims)
+        if shared_dims:
+            concat_dim = next(iter(shared_dims))
+            return xr.concat(datasets, dim=concat_dim, combine_attrs="drop_conflicts")
+        raise
+
+
 def apply_query_to_array(
     arr: xr.DataArray,
     query: dict[str, Any] | None = None,
@@ -122,6 +197,40 @@ def _dtype_itemsize(dtype: np.dtype) -> int:
     return max(int(getattr(dtype, "itemsize", 8)), 1)
 
 
+def _is_cftime_scalar(value: Any) -> bool:
+    return value is not None and type(value).__module__.startswith("cftime")
+
+
+def make_dataframe_panel_safe(df: pd.DataFrame) -> pd.DataFrame:
+    if df.empty:
+        return df
+
+    safe = df.copy()
+    for column in safe.columns:
+        series = safe[column]
+        if not pd.api.types.is_object_dtype(series):
+            continue
+
+        sample = next(
+            (
+                value
+                for value in series.tolist()
+                if value is not None and not (isinstance(value, float) and np.isnan(value))
+            ),
+            None,
+        )
+        if not _is_cftime_scalar(sample):
+            continue
+
+        text_values = [str(value) if value is not None else None for value in series]
+        converted = pd.to_datetime(pd.Series(text_values, dtype="object"), errors="coerce")
+        if int(converted.notna().sum()) == sum(value is not None for value in text_values):
+            safe[column] = converted
+        else:
+            safe[column] = pd.Series(text_values, dtype="string")
+    return safe
+
+
 def estimate_query_cost(
     dataset: xr.Dataset,
     table: str,
@@ -133,12 +242,11 @@ def estimate_query_cost(
 
     base = dataset[table]
     filtered = apply_query_to_array(base, query=query, filterable_coords=filterable_coords)
-    queryable = _iter_queryable_coords(base, filterable_coords)
     selected_sizes = {dim: int(filtered.sizes.get(dim, 0)) for dim in base.dims}
     full_rows = int(prod(int(size) for size in base.sizes.values())) if base.ndim else 1
     selected_rows = int(prod(selected_sizes.values())) if selected_sizes else 1
-    columns = [*queryable, table]
-    bytes_per_row = sum(_dtype_itemsize(base.coords[name].dtype) for name in queryable if name in base.coords)
+    columns = _frame_columns_for_array(dataset, base, table, filterable_coords)
+    bytes_per_row = sum(_dtype_itemsize(base.coords[name].dtype) for name in columns if name in base.coords)
     bytes_per_row += _dtype_itemsize(base.dtype)
     approx_mb = (selected_rows * bytes_per_row) / (1024 * 1024) if selected_rows else 0.0
 
@@ -206,12 +314,17 @@ class LabXarraySourceAdapter:
     max_rows: int = 0
     dataset_format: str = "auto"
     load_kwargs: dict[str, Any] = field(default_factory=dict)
+    source_uris: list[str] = field(default_factory=list, init=False)
+    source_mode: str = field(default="single-file", init=False)
+    _opened_children: list[xr.Dataset] = field(default_factory=list, init=False, repr=False)
 
     def __post_init__(self) -> None:
         if self.dataset is None and self.uri is None:
             raise ValueError("Provide either 'dataset' or 'uri'.")
         if self.dataset is None:
             self.dataset = self._open_dataset(self.uri)
+        else:
+            self.source_mode = "in-memory"
 
     def _is_zarr_uri(self, uri: str) -> bool:
         lowered = str(uri).lower()
@@ -224,13 +337,38 @@ class LabXarraySourceAdapter:
     def _open_dataset(self, uri: str | None) -> xr.Dataset:
         if uri is None:
             raise ValueError("A uri is required to open a dataset.")
-        if self._is_zarr_uri(uri):
-            return xr.open_zarr(uri, **self.load_kwargs)
-        return xr.open_dataset(uri, **self.load_kwargs)
+        uris = _expand_input_uris(uri)
+        self.source_uris = uris
+        self.source_mode = "multi-file" if len(uris) > 1 or _looks_like_multi_input(uri) else "single-file"
+        if len(uris) == 1 and self._is_zarr_uri(uris[0]):
+            return xr.open_zarr(uris[0], **self.load_kwargs)
+        if len(uris) > 1:
+            try:
+                return xr.open_mfdataset(
+                    uris,
+                    combine="by_coords",
+                    combine_attrs="drop_conflicts",
+                    data_vars="minimal",
+                    coords="minimal",
+                    compat="override",
+                    parallel=False,
+                    **self.load_kwargs,
+                )
+            except Exception:
+                pass
+
+        opened = [xr.open_dataset(path, **self.load_kwargs) for path in uris]
+        self._opened_children = opened
+        return _combine_opened_datasets(opened)
 
     def close(self) -> None:
-        if self.dataset is not None and hasattr(self.dataset, "close"):
-            self.dataset.close()
+        seen: set[int] = set()
+        for dataset in [*self._opened_children, self.dataset]:
+            if dataset is None or not hasattr(dataset, "close") or id(dataset) in seen:
+                continue
+            seen.add(id(dataset))
+            dataset.close()
+        self._opened_children = []
 
     def get_tables(self) -> list[str]:
         assert self.dataset is not None
@@ -253,7 +391,7 @@ class LabXarraySourceAdapter:
         if arr.ndim == 0:
             return pd.DataFrame({table: [arr.item()]})
         df = arr.to_dataframe(name=table).reset_index()
-        ordered = [*self._iter_queryable_coords(self._get_array(table)), table]
+        ordered = _frame_columns_for_array(self.dataset, self._get_array(table), table, self.filterable_coords)
         df = df[[col for col in ordered if col in df.columns]]
         if self.max_rows and len(df) > self.max_rows:
             raise ValueError(
@@ -299,6 +437,9 @@ class LabXarraySourceAdapter:
                 "description": arr.attrs.get("long_name") or name,
                 "dims": list(arr.dims),
                 "queryable_coords": queryable,
+                "auxiliary_coords": [coord for coord in _selected_auxiliary_coords(self.dataset, arr)],
+                "source_mode": self.source_mode,
+                "source_uris": list(self.source_uris),
                 "columns": columns,
             }
         return metadata if table is None else metadata[table]
@@ -367,6 +508,8 @@ def resolve_runtime_source_name() -> str:
 
 def build_source(dataset: xr.Dataset | None = None, uri: str | None = None, **kwargs: Any) -> Any:
     ensure_local_lumen_on_path()
+    if uri is not None and _looks_like_multi_input(uri):
+        return LabXarraySourceAdapter(dataset=dataset, uri=uri, **kwargs)
     try:
         from lumen.sources.xarray import XarraySource
     except Exception:
@@ -397,11 +540,10 @@ def sample_table_dataframe(
     if table not in dataset.data_vars:
         raise KeyError(f"Unknown table {table!r}.")
     arr = dataset[table]
-    queryable = _iter_queryable_coords(arr, filterable_coords)
+    ordered = _frame_columns_for_array(dataset, arr, table, filterable_coords)
     arr = apply_query_to_array(arr, query=query, filterable_coords=filterable_coords)
 
     if arr.ndim and any(int(size) == 0 for size in arr.sizes.values()):
-        ordered = [*queryable, table]
         return pd.DataFrame(columns=[col for col in ordered if col in ordered])
 
     if limit > 0 and arr.ndim:
@@ -424,7 +566,6 @@ def sample_table_dataframe(
         return pd.DataFrame({table: [arr.item()]})
 
     df = arr.to_dataframe(name=table).reset_index()
-    ordered = [*queryable, table]
     return df[[col for col in ordered if col in df.columns]]
 
 
@@ -457,13 +598,17 @@ def _build_embedded_demo_dataset() -> xr.Dataset:
 
 
 def bundled_sample_paths() -> dict[str, Path]:
-    sample_names = ("air_temperature", "compare_weather", "ersstv5", "rasm")
+    sample_names = ("air_temperature", "compare_weather", "ersstv5", "rasm", "curvilinear_rasm_demo")
     root = _sample_data_root()
-    return {
+    samples = {
         name: (root / f"{name}.nc")
         for name in sample_names
         if (root / f"{name}.nc").exists()
     }
+    split_root = root / "multi_air_temperature"
+    if split_root.exists() and list(split_root.glob("*.nc")):
+        samples["multi_air_temperature"] = split_root / "*.nc"
+    return samples
 
 
 def load_demo_dataset(name: str = "air_temperature") -> xr.Dataset:

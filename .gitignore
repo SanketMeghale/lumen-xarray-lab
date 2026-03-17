@@ -20,8 +20,11 @@ assets/screenshots/*.png
 !assets/screenshots/dashboard_desktop.png
 !assets/screenshots/dashboard_mobile.png
 assets/sample_data/*.nc
+!assets/sample_data/curvilinear_rasm_demo.nc
 assets/sample_data/*.zarr
 benchmarks/results/*.json
 !benchmarks/results/flattening_vs_sql.json
 !benchmarks/results/netcdf_vs_zarr.json
 !benchmarks/results/large_grid_limits.json
+!benchmarks/results/multifile_loading.json
+!benchmarks/results/transform_timings.json

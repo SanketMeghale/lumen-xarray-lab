@@ -92,3 +92,21 @@ def test_dashboard_controller_removes_stale_uploaded_files(synthetic_dataset):
     controller.load_demo()
 
     assert not upload_path.exists()
+
+
+def test_dashboard_controller_loads_globbed_multi_file_input(tmp_path, synthetic_dataset):
+    part_one = synthetic_dataset.isel(time=slice(0, 1)).copy(deep=True)
+    part_two = synthetic_dataset.isel(time=slice(1, 2)).copy(deep=True)
+    for index, dataset in enumerate((part_one, part_two), start=1):
+        target = tmp_path / f"part_{index:02d}.nc"
+        for variable in dataset.variables:
+            dataset[variable].encoding = {}
+        dataset.to_netcdf(target)
+
+    dashboard = create_dashboard()
+    controller = dashboard._dashboard_controller
+    controller._path_input.value = str(tmp_path / "*.nc")
+    controller._on_load_path()
+
+    assert controller.state.tables == ["temperature"]
+    assert controller.state.source_mode == "multi-file"

@@ -27,7 +27,7 @@
 > **GSoC reviewer summary**
 >
 > - **Goal:** prove that Lumen can support xarray datasets without losing its tabular source boundary.
-> - **Already working here:** runnable explorer, tested source/runtime adapter, coordinate-aware filtering, real-world ERSSTv5 validation, screenshots, GIFs, and benchmark notes.
+> - **Already working here:** runnable explorer, tested source/runtime adapter, CF-aware coordinate detection, multi-file loading, scientific transforms, GeoViews maps, real-world ERSSTv5 validation, screenshots, GIFs, and benchmark notes.
 > - **Upstream position:** this repo is a companion prototype, not a replacement for upstream `lumen`.
 > - **Best files to inspect first:** [`docs/architecture.md`](docs/architecture.md), [`docs/proposal-alignment.md`](docs/proposal-alignment.md), [`docs/upstream-plan.md`](docs/upstream-plan.md), [`src/lumen_xarray_lab/datasets.py`](src/lumen_xarray_lab/datasets.py), and [`examples/dashboard_app.py`](examples/dashboard_app.py).
 
@@ -35,10 +35,10 @@
 
 <table>
   <tr>
-    <td width="25%"><strong>51 passing tests</strong><br />Explorer, runtime, export, schema, CF, and benchmark helpers are covered by the current suite.</td>
-    <td width="25%"><strong>16 generated screenshots</strong><br />Feature and real-world images in this README are exported from the running app, not mocked manually.</td>
-    <td width="25%"><strong>4 bundled datasets</strong><br />The repo includes built-in data for line, spatial, compare, coordinate-intelligence, and real-world validation demos.</td>
-    <td width="25%"><strong>5 reviewer docs</strong><br />Architecture, benchmarks, reviewer guide, proposal alignment, and upstream plan make the repo easy to evaluate quickly.</td>
+    <td width="25%"><strong>64 passing tests</strong><br />Explorer, runtime, export, schema, CF, transforms, and benchmark helpers are covered by the current suite.</td>
+    <td width="25%"><strong>27 generated screenshots</strong><br />Hero, feature-tour, and real-world images in this README are exported from the running app, not mocked manually.</td>
+    <td width="25%"><strong>6 bundled datasets</strong><br />The repo includes demo, compare, multi-file, curvilinear-grid, and real-world climate datasets for reliable validation.</td>
+    <td width="25%"><strong>6 reviewer docs</strong><br />Architecture, benchmarks, roadmap, reviewer guide, proposal alignment, and upstream plan make the repo easy to evaluate quickly.</td>
   </tr>
 </table>
 
@@ -162,15 +162,77 @@ The new `Time Analysis` tab adds a more scientific workflow: aggregate over non-
 
 ### 11. Dataset Info / CF Metadata
 
-<img src="assets/screenshots/gallery/11_dataset_info.png" alt="Dataset info and CF metadata pane" width="100%" />
+<p align="center">
+  <img src="assets/screenshots/gallery/11_dataset_info.png" alt="Dataset info and CF metadata pane" width="42%" />
+</p>
 
 The explorer rail now includes a dedicated dataset-info pane with table-level metadata, CF-style coordinate metadata, runtime details, and a compact attribute preview.
 
 ### 12. Query Planning
 
-<img src="assets/screenshots/gallery/12_query_planning.png" alt="Query planning pane" width="100%" />
+<p align="center">
+  <img src="assets/screenshots/gallery/12_query_planning.png" alt="Query planning pane" width="42%" />
+</p>
 
 The query-planning card shows estimated full rows, approximate DataFrame size, risk level, and active plot/spatial resolution controls before a full flattening step would happen.
+
+### 13. Multi-File Loading
+
+<p align="center">
+  <img src="assets/screenshots/gallery/13_multifile_loading.png" alt="Multi-file loading metadata" width="42%" />
+</p>
+
+Glob-based loading and split-file inputs are surfaced directly in the dataset-info pane so reviewers can verify that the lab handles multi-file archives as one logical source.
+
+### 14. Rolling Mean Transform
+
+<img src="assets/screenshots/gallery/14_transform_rolling_mean.png" alt="Rolling mean transform" width="100%" />
+
+The transform surface keeps the computation inside xarray, then exposes a reduced view for explorer output instead of flattening the full dataset first.
+
+### 15. Anomaly Transform
+
+<img src="assets/screenshots/gallery/15_transform_anomaly.png" alt="Anomaly transform" width="100%" />
+
+Anomaly mode makes time-series deviations easy to inspect on real climate data without leaving the explorer.
+
+### 16. Resample Transform
+
+<img src="assets/screenshots/gallery/16_transform_resample.png" alt="Resample transform" width="100%" />
+
+Resampling demonstrates a practical upstream-friendly scientific transform: temporal aggregation in xarray, preview in Lumen-style UI.
+
+### 17. Climatology Transform
+
+<img src="assets/screenshots/gallery/17_transform_climatology.png" alt="Climatology transform" width="100%" />
+
+Climatology mode groups by month and exposes seasonal structure directly from the xarray-backed table.
+
+### 18. Spatial Mean Transform
+
+<img src="assets/screenshots/gallery/18_transform_spatial_mean.png" alt="Spatial mean transform" width="100%" />
+
+Spatial-mean reduction collapses latitude and longitude before preview, which is exactly the type of scientific reduction that should happen before DataFrame materialization.
+
+### 19. Zonal Mean Transform
+
+<img src="assets/screenshots/gallery/19_transform_zonal_mean.png" alt="Zonal mean transform" width="100%" />
+
+Zonal-mean output reduces longitude only, leaving a latitude-by-time structure that still feels natural inside the explorer.
+
+### 20. GeoViews Map
+
+<img src="assets/screenshots/gallery/20_geoviews_map.png" alt="GeoViews curvilinear map" width="100%" />
+
+GeoViews map mode adds a more scientific map surface with coastlines and curvilinear-grid rendering, which is a visibly stronger scientific-data story than a generic scatter plot.
+
+### 21. Curvilinear CF Metadata
+
+<p align="center">
+  <img src="assets/screenshots/gallery/21_curvilinear_cf_metadata.png" alt="Curvilinear CF metadata pane" width="42%" />
+</p>
+
+The curvilinear demo subset shows that CF-aware metadata is not limited to simple `lat/lon` dimensions: auxiliary `xc/yc` grids are detected, surfaced, and used for map-capable workflows.
 
 ## Real-World Validation: NOAA ERSSTv5
 
@@ -204,7 +266,7 @@ This validation pass matters because it exercises a real monthly climate dataset
   </tr>
 </table>
 
-### 13. Architecture Diagram
+### Architecture Diagram
 
 <img src="assets/diagrams/xarray_source_proposal_diagram.svg" alt="Proposal architecture diagram" width="100%" />
 
@@ -234,8 +296,9 @@ This repository is not meant to replace upstream `lumen`. It is a companion repo
 |---|---|
 | xarray-backed datasets can be explored through a Lumen-style workflow | `examples/dashboard_app.py`, Explorer UI, screenshots, GIF |
 | coordinate-aware filtering can happen before flattening | `src/lumen_xarray_lab/datasets.py`, explorer query flow |
-| schema, metadata, and coordinate roles can be surfaced in the UI | explorer summary panels, coordinate tables, CF helpers |
-| the feature can be tested and documented honestly | `tests/`, `docs/benchmarks.md`, `docs/upstream-plan.md` |
+| schema, metadata, and coordinate roles can be surfaced in the UI | explorer summary panels, coordinate tables, curvilinear CF helpers |
+| multi-file, transform, and map workflows can stay inside the same source boundary | `open_mfdataset`-aware loading, transform tab, GeoViews gallery views |
+| the feature can be tested and documented honestly | `tests/`, `docs/benchmarks.md`, `docs/upstream-plan.md`, generated screenshot gallery |
 | the work can be split into demo-only vs upstream-ready pieces | fallback runtime design plus upstream-plan doc |
 
 ## Feature Overview
@@ -244,15 +307,18 @@ This repository is not meant to replace upstream `lumen`. It is a companion repo
 
 - Explorer-style dashboard with in-app dataset loading
 - local path, URI, bundled sample, and upload-based dataset loading
+- glob-based multi-file loading with `open_mfdataset`-first behavior and deterministic combine fallback
 - table switching across xarray `data_vars`
 - coordinate-aware filters derived from queryable 1D coordinates
 - line, scatter, bar, histogram, and spatial chart modes
+- GeoViews-based map rendering for a curvilinear-grid demo subset
 - statistics, coverage, comparison, and export panels
 - dedicated time-analysis workflows for rolling mean, anomaly, cumulative, and trend views
+- scientific transforms for rolling mean, anomaly, resample, climatology, spatial mean, and zonal mean
 - dataset info and CF metadata pane in the explorer rail
 - query cost estimation plus plot/spatial resolution controls
 - source query and pseudo-SQL preview
-- coordinate-role detection for `time`, `latitude`, `longitude`, and `vertical`
+- coordinate-role detection for `time`, `latitude`, `longitude`, and `vertical`, including curvilinear map candidates
 - schema enrichment and runtime/source diagnostics
 - benchmark scripts plus published local benchmark outputs
 - screenshot and GIF capture flow for proposal/demo assets
@@ -274,6 +340,8 @@ This repository is not meant to replace upstream `lumen`. It is a companion repo
 - `Pseudo SQL` gives a familiar mental model for reviewers who think in SQL first.
 - `Compare` works when the loaded dataset has multiple variables on shared coordinates.
 - `Spatial` view uses detected latitude and longitude columns when available.
+- `Transforms` keep rolling mean, anomaly, resample, climatology, spatial mean, and zonal mean inside xarray before previewing the result.
+- `GeoViews Map` uses a curvilinear-grid sample to demonstrate a more serious scientific visualization path than a generic scatter map.
 
 ## Runtime Model
 
@@ -293,6 +361,12 @@ Install the project in editable mode:
 
 ```bash
 pip install -e .[test]
+```
+
+Install the richer scientific demo stack if you want GeoViews maps and media export:
+
+```bash
+pip install -e .[demo,test]
 ```
 
 Run the main examples:
@@ -337,13 +411,17 @@ The repo includes small local datasets for reliable demos:
 - `assets/sample_data/rasm.nc`
 - `assets/sample_data/ersstv5.nc`
 - `assets/sample_data/compare_weather.nc`
+- `assets/sample_data/curvilinear_rasm_demo.nc`
+- `assets/sample_data/multi_air_temperature/*.nc`
 
 Recommended demo order:
 
 1. `air_temperature` for a clean first walkthrough
-2. `rasm` for coordinate-role detection on less obvious dimensions
+2. `multi_air_temperature` for split-file loading
 3. `compare_weather` for the compare panel
-4. `ersstv5` for a heavier real-world climate-style dataset
+4. `curvilinear_rasm_demo` for CF metadata and GeoViews maps
+5. `ersstv5` for a heavier real-world climate-style dataset
+6. `rasm` for the full curvilinear source file behind the smaller demo subset
 
 ## Benchmarks And Limits
 
@@ -355,6 +433,8 @@ Current published results:
 - rough 4-column DataFrame estimate for that selection: about `118.07 MB`
 - large climate-style grid estimate: `378,957,600` rows and about `11.29 GB`
 - local NetCDF open timing for the small demo dataset: `0.3703 s`
+- split multi-file sample open timing: `1.4488 s` vs `0.5291 s` for the single-file baseline
+- ERSSTv5 transform timings: rolling mean `1.7886 s`, anomaly `0.2499 s`, resample `0.2403 s`, climatology `0.1266 s`, spatial mean `0.0933 s`, zonal mean `0.0785 s`
 
 Read the full notes here:
 
@@ -362,6 +442,8 @@ Read the full notes here:
 - [flattening_vs_sql.json](benchmarks/results/flattening_vs_sql.json)
 - [netcdf_vs_zarr.json](benchmarks/results/netcdf_vs_zarr.json)
 - [large_grid_limits.json](benchmarks/results/large_grid_limits.json)
+- [multifile_loading.json](benchmarks/results/multifile_loading.json)
+- [transform_timings.json](benchmarks/results/transform_timings.json)
 
 The main takeaway is simple: filter first in xarray, flatten last, and protect the boundary with `max_rows`.
 

@@ -259,7 +259,7 @@ def _configure_filtered_query(controller: object, tab_index: int) -> None:
 def _configure_compare(controller: object) -> None:
     explorer = controller._explorer
     explorer._compare_table.value = "humidity"
-    explorer._output_tabs.active = 4
+    explorer._output_tabs.active = 5
 
 
 def _configure_time_analysis(controller: object) -> None:
@@ -274,6 +274,34 @@ def _configure_query_planning(controller: object) -> None:
     explorer = controller._explorer
     explorer._plot_resolution.value = 100
     explorer._spatial_resolution.value = 16
+
+
+def _configure_multifile_dataset_info(controller: object) -> None:
+    explorer = controller._explorer
+    explorer._output_tabs.active = 0
+
+
+def _configure_transform(controller: object, transform: str) -> None:
+    explorer = controller._explorer
+    _select_table(controller, "sst")
+    explorer._transform_mode.value = transform
+    if transform == "rolling mean":
+        explorer._transform_window.value = 12
+    if transform == "resample":
+        explorer._transform_rule.value = "QS-DEC"
+    explorer._output_tabs.active = 4
+
+
+def _configure_geoviews_map(controller: object) -> None:
+    explorer = controller._explorer
+    _select_table(controller, "Tair")
+    _set_first_datetime(controller)
+    explorer._chart_type.value = "geoviews map"
+    explorer._output_tabs.active = 0
+
+
+def _configure_curvilinear_metadata(controller: object) -> None:
+    _select_table(controller, "Tair")
 
 
 def _select_table(controller: object, table: str) -> None:
@@ -357,19 +385,19 @@ def feature_gallery_captures(root: str | Path) -> list[FeatureGalleryCapture]:
             uri=str(samples / "air_temperature.nc"),
             filename="07_coverage.png",
             target_selector=".lxl-explorer-output-card",
-            configure=lambda controller: _configure_filtered_query(controller, 5),
+            configure=lambda controller: _configure_filtered_query(controller, 6),
         ),
         FeatureGalleryCapture(
             uri=str(samples / "air_temperature.nc"),
             filename="08_source_query.png",
             target_selector=".lxl-explorer-output-card",
-            configure=lambda controller: _configure_filtered_query(controller, 6),
+            configure=lambda controller: _configure_filtered_query(controller, 7),
         ),
         FeatureGalleryCapture(
             uri=str(samples / "air_temperature.nc"),
             filename="09_pseudo_sql.png",
             target_selector=".lxl-explorer-output-card",
-            configure=lambda controller: _configure_filtered_query(controller, 7),
+            configure=lambda controller: _configure_filtered_query(controller, 8),
         ),
         FeatureGalleryCapture(
             uri=str(samples / "air_temperature.nc"),
@@ -387,6 +415,60 @@ def feature_gallery_captures(root: str | Path) -> list[FeatureGalleryCapture]:
             filename="12_query_planning.png",
             target_selector=".lxl-explorer-query-card",
             configure=_configure_query_planning,
+        ),
+        FeatureGalleryCapture(
+            uri=str(samples / "multi_air_temperature" / "*.nc"),
+            filename="13_multifile_loading.png",
+            target_selector=".lxl-explorer-dataset-info-card",
+            configure=_configure_multifile_dataset_info,
+        ),
+        FeatureGalleryCapture(
+            uri=str(samples / "ersstv5.nc"),
+            filename="14_transform_rolling_mean.png",
+            target_selector=".lxl-explorer-output-card",
+            configure=lambda controller: _configure_transform(controller, "rolling mean"),
+        ),
+        FeatureGalleryCapture(
+            uri=str(samples / "ersstv5.nc"),
+            filename="15_transform_anomaly.png",
+            target_selector=".lxl-explorer-output-card",
+            configure=lambda controller: _configure_transform(controller, "anomaly"),
+        ),
+        FeatureGalleryCapture(
+            uri=str(samples / "ersstv5.nc"),
+            filename="16_transform_resample.png",
+            target_selector=".lxl-explorer-output-card",
+            configure=lambda controller: _configure_transform(controller, "resample"),
+        ),
+        FeatureGalleryCapture(
+            uri=str(samples / "ersstv5.nc"),
+            filename="17_transform_climatology.png",
+            target_selector=".lxl-explorer-output-card",
+            configure=lambda controller: _configure_transform(controller, "climatology"),
+        ),
+        FeatureGalleryCapture(
+            uri=str(samples / "ersstv5.nc"),
+            filename="18_transform_spatial_mean.png",
+            target_selector=".lxl-explorer-output-card",
+            configure=lambda controller: _configure_transform(controller, "spatial mean"),
+        ),
+        FeatureGalleryCapture(
+            uri=str(samples / "ersstv5.nc"),
+            filename="19_transform_zonal_mean.png",
+            target_selector=".lxl-explorer-output-card",
+            configure=lambda controller: _configure_transform(controller, "zonal mean"),
+        ),
+        FeatureGalleryCapture(
+            uri=str(samples / "curvilinear_rasm_demo.nc"),
+            filename="20_geoviews_map.png",
+            target_selector=".lxl-explorer-output-card canvas",
+            configure=_configure_geoviews_map,
+        ),
+        FeatureGalleryCapture(
+            uri=str(samples / "curvilinear_rasm_demo.nc"),
+            filename="21_curvilinear_cf_metadata.png",
+            target_selector=".lxl-explorer-dataset-info-card",
+            configure=_configure_curvilinear_metadata,
         ),
     ]
 
