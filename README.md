@@ -93,7 +93,7 @@ Every image below is generated from the dashboard itself through the scripted ca
 
 ### 1. Explorer Overview
 
-<img src="assets/screenshots/gallery/01_overview.png" alt="Explorer overview" width="100%" />
+<img src="assets/screenshots/gallery/01_overview.pg" alt="Explorer overview" width="100%" />
 
 Dataset summary, table switching, axis controls, filter controls, and the explorer output surface are all visible in one frame.
 
