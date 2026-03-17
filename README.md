@@ -24,11 +24,7 @@
   <strong>xarray-native selection. Lumen-native integration. Proposal-ready proof.</strong>
 </p>
 
-<p align="center">
-  <a href="docs/media/overview_recording_2026-03-17.mp4">
-    <img src="assets/screenshots/dashboard_desktop.png" alt="Overview recording preview" width="100%" />
-  </a>
-</p>
+
 
 <p align="center">
   <strong><a href="docs/media/overview_recording_2026-03-17.mp4">Overview Recording (MP4)</a></strong>
