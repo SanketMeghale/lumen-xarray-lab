@@ -30,11 +30,12 @@ def build_hero(state: DashboardState) -> pn.pane.HTML:
     return pn.pane.HTML(
         f"""
         <section class="lxl-hero">
-          <div class="lxl-kicker">Companion Dashboard</div>
+          <div class="lxl-kicker">Lumen Explorer Style</div>
           <h1 class="lxl-title">{title}</h1>
           <p class="lxl-subtitle">
-            A proposal-oriented view of how xarray datasets can be interpreted,
-            enriched, and presented for Lumen workflows.
+            Select a table, inspect coordinate-aware filters, preview the active
+            query, and chart sampled xarray-backed results through a Lumen-like
+            explorer surface.
           </p>
           <div class="lxl-chip-row">{chip_html}</div>
         </section>
@@ -116,8 +117,11 @@ def build_sidebar_card(title: str, body: pn.viewable.Viewable) -> pn.Card:
         title=title,
         collapsed=False,
         sizing_mode="stretch_width",
+        css_classes=["lxl-paper-card"],
         styles={
-            "border-radius": "18px",
-            "box-shadow": "0 18px 45px rgba(15, 23, 42, 0.08)",
+            "border-radius": "12px",
+            "box-shadow": "0 1px 2px rgba(15, 23, 42, 0.06), 0 8px 24px rgba(15, 23, 42, 0.06)",
+            "background": "#ffffff",
+            "border": "1px solid #d9e1ea",
         },
     )

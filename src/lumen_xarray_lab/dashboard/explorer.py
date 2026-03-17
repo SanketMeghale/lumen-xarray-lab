@@ -9,7 +9,7 @@ import panel as pn
 import param
 
 from bokeh.models import BasicTicker, ColorBar, ColumnDataSource, HoverTool, LinearColorMapper
-from bokeh.palettes import Viridis256
+from bokeh.palettes import Blues256
 from bokeh.plotting import figure
 from panel.viewable import Viewer
 
@@ -145,6 +145,13 @@ class ExplorerView(Viewer):
         self._sync_compare_options()
         self._update_outputs()
 
+        paper_styles = {
+            "border-radius": "12px",
+            "box-shadow": "0 1px 2px rgba(15, 23, 42, 0.06), 0 8px 24px rgba(15, 23, 42, 0.06)",
+            "background": "#ffffff",
+            "border": "1px solid #d9e1ea",
+        }
+
         dataset_card = pn.Card(
             pn.Column(
                 pn.pane.HTML("<div class='lxl-explorer-section-title'>Dataset</div>"),
@@ -153,10 +160,11 @@ class ExplorerView(Viewer):
                 self._field_inventory,
                 sizing_mode="stretch_width",
             ),
-            title="Dataset Explorer",
+            title="Select Data to Explore",
             collapsed=False,
             sizing_mode="stretch_width",
-            styles={"border-radius": "18px"},
+            css_classes=["lxl-paper-card"],
+            styles=paper_styles,
         )
         visual_card = pn.Card(
             pn.Column(
@@ -167,10 +175,11 @@ class ExplorerView(Viewer):
                 self._limit,
                 sizing_mode="stretch_width",
             ),
-            title="View Builder",
+            title="Visualization",
             collapsed=False,
             sizing_mode="stretch_width",
-            styles={"border-radius": "18px"},
+            css_classes=["lxl-paper-card"],
+            styles=paper_styles,
         )
         filter_card = pn.Card(
             pn.Column(
@@ -183,7 +192,8 @@ class ExplorerView(Viewer):
             title="Filters",
             collapsed=False,
             sizing_mode="stretch_width",
-            styles={"border-radius": "18px"},
+            css_classes=["lxl-paper-card"],
+            styles=paper_styles,
         )
         compare_card = pn.Card(
             pn.Column(
@@ -197,7 +207,8 @@ class ExplorerView(Viewer):
             title="Actions",
             collapsed=False,
             sizing_mode="stretch_width",
-            styles={"border-radius": "18px"},
+            css_classes=["lxl-paper-card"],
+            styles=paper_styles,
         )
 
         self._output_tabs = pn.Tabs(
@@ -230,7 +241,8 @@ class ExplorerView(Viewer):
                         title="Selection Summary",
                         collapsed=False,
                         sizing_mode="stretch_width",
-                        styles={"border-radius": "18px"},
+                        css_classes=["lxl-paper-card"],
+                        styles=paper_styles,
                     ),
                     sizing_mode="stretch_width",
                 ),
@@ -239,7 +251,8 @@ class ExplorerView(Viewer):
                     title="Explorer Output",
                     collapsed=False,
                     sizing_mode="stretch_width",
-                    styles={"border-radius": "18px"},
+                    css_classes=["lxl-paper-card"],
+                    styles=paper_styles,
                 ),
                 sizing_mode="stretch_width",
             ),
@@ -548,14 +561,17 @@ class ExplorerView(Viewer):
     def _style_plot(self, plot) -> None:
         plot.toolbar.logo = None
         plot.toolbar_location = "above"
-        plot.background_fill_color = "#fbf7ef"
-        plot.border_fill_color = "#fbf7ef"
-        plot.outline_line_color = "#d8d3c6"
-        plot.grid.grid_line_color = "#e4dfd3"
-        plot.grid.grid_line_alpha = 0.8
-        plot.axis.axis_line_color = "#9aa6a2"
-        plot.axis.major_tick_line_color = "#9aa6a2"
+        plot.background_fill_color = "#ffffff"
+        plot.border_fill_color = "#ffffff"
+        plot.outline_line_color = "#d9e1ea"
+        plot.grid.grid_line_color = "#e5e7eb"
+        plot.grid.grid_line_alpha = 1.0
+        plot.axis.axis_line_color = "#9aa4b2"
+        plot.axis.major_tick_line_color = "#9aa4b2"
         plot.axis.minor_tick_line_color = None
+        plot.axis.major_label_text_color = "#4b5563"
+        plot.axis.axis_label_text_color = "#4b5563"
+        plot.title.text_color = "#1f2937"
 
     def _build_plot(self, df: pd.DataFrame):
         x = self._x.value
@@ -581,7 +597,7 @@ class ExplorerView(Viewer):
             high = float(spatial["__value__"].max())
             if low == high:
                 high = low + 1.0
-            mapper = LinearColorMapper(palette=Viridis256, low=low, high=high)
+            mapper = LinearColorMapper(palette=Blues256, low=low, high=high)
             source = ColumnDataSource(spatial)
             plot = figure(
                 height=380,
@@ -629,7 +645,7 @@ class ExplorerView(Viewer):
                 return pn.pane.Markdown("Histogram requires a numeric y column.")
             hist, edges = np.histogram(series, bins=min(20, max(5, len(series))))
             plot = figure(height=380, sizing_mode="stretch_width", title=f"{y} distribution")
-            plot.quad(top=hist, bottom=0, left=edges[:-1], right=edges[1:], fill_color="#117864", line_color="#0b3d38")
+            plot.quad(top=hist, bottom=0, left=edges[:-1], right=edges[1:], fill_color="#1976d2", line_color="#1565c0")
             self._style_plot(plot)
             return plot
 
@@ -640,10 +656,10 @@ class ExplorerView(Viewer):
         if chart_type == "line":
             ordered = df.sort_values(x)
             source = ColumnDataSource(ordered.assign(__x__=ordered[x], __y__=ordered[y]))
-            plot.line("__x__", "__y__", line_width=3, color="#117864", source=source)
-            plot.scatter("__x__", "__y__", size=7, color="#cf7f29", source=source)
+            plot.line("__x__", "__y__", line_width=3, color="#1976d2", source=source)
+            plot.scatter("__x__", "__y__", size=7, color="#64b5f6", line_color="#1565c0", source=source)
         elif chart_type == "scatter":
-            plot.scatter("__x__", "__y__", size=8, fill_color="#117864", line_color="#0b3d38", fill_alpha=0.85, source=source)
+            plot.scatter("__x__", "__y__", size=8, fill_color="#42a5f5", line_color="#1565c0", fill_alpha=0.85, source=source)
         elif chart_type == "bar":
             grouped = df.groupby(x, dropna=False)[y].mean().reset_index()
             grouped[x] = grouped[x].astype(str)
@@ -654,7 +670,7 @@ class ExplorerView(Viewer):
                 title=f"Mean {y} by {x}",
                 x_range=list(grouped[x]),
             )
-            plot.vbar(x="__x__", top="__y__", width=0.8, color="#117864", source=source)
+            plot.vbar(x="__x__", top="__y__", width=0.8, color="#1976d2", source=source)
 
         plot.add_tools(HoverTool(tooltips=[(x, "@__x__"), (y, "@__y__")]))
         self._style_plot(plot)

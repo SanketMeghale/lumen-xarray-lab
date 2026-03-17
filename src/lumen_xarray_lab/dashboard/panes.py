@@ -23,12 +23,32 @@ from .widgets import (
 
 def build_main_pane(state: DashboardState) -> pn.viewable.Viewable:
     explorer = ExplorerView(state=state)
+    paper_styles = {
+        "border-radius": "12px",
+        "box-shadow": "0 1px 2px rgba(15, 23, 42, 0.06), 0 8px 24px rgba(15, 23, 42, 0.06)",
+        "background": "#ffffff",
+        "border": "1px solid #d9e1ea",
+    }
     return pn.Column(
         build_hero(state),
         build_metric_row(state),
         pn.Row(
-            pn.Card(build_header(state), title="Runtime", collapsed=False, sizing_mode="stretch_width"),
-            pn.Card(build_summary(state), title="Dataset Summary", collapsed=False, sizing_mode="stretch_width"),
+            pn.Card(
+                build_header(state),
+                title="Session",
+                collapsed=False,
+                sizing_mode="stretch_width",
+                css_classes=["lxl-paper-card"],
+                styles=paper_styles,
+            ),
+            pn.Card(
+                build_summary(state),
+                title="Dataset Summary",
+                collapsed=False,
+                sizing_mode="stretch_width",
+                css_classes=["lxl-paper-card"],
+                styles=paper_styles,
+            ),
             sizing_mode="stretch_width",
         ),
         explorer,
