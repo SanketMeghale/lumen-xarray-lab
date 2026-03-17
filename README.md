@@ -27,10 +27,20 @@
 > **GSoC reviewer summary**
 >
 > - **Goal:** prove that Lumen can support xarray datasets without losing its tabular source boundary.
-> - **Already working here:** runnable explorer, tested source/runtime adapter, coordinate-aware filtering, screenshots, GIFs, and benchmark notes.
+> - **Already working here:** runnable explorer, tested source/runtime adapter, coordinate-aware filtering, real-world ERSSTv5 validation, screenshots, GIFs, and benchmark notes.
 > - **Upstream position:** this repo is a companion prototype, not a replacement for upstream `lumen`.
 > - **Best files to inspect first:** [`docs/architecture.md`](docs/architecture.md), [`docs/proposal-alignment.md`](docs/proposal-alignment.md), [`docs/upstream-plan.md`](docs/upstream-plan.md), [`src/lumen_xarray_lab/datasets.py`](src/lumen_xarray_lab/datasets.py), and [`examples/dashboard_app.py`](examples/dashboard_app.py).
 
+## Proof At A Glance
+
+<table>
+  <tr>
+    <td width="25%"><strong>51 passing tests</strong><br />Explorer, runtime, export, schema, CF, and benchmark helpers are covered by the current suite.</td>
+    <td width="25%"><strong>16 generated screenshots</strong><br />Feature and real-world images in this README are exported from the running app, not mocked manually.</td>
+    <td width="25%"><strong>4 bundled datasets</strong><br />The repo includes built-in data for line, spatial, compare, coordinate-intelligence, and real-world validation demos.</td>
+    <td width="25%"><strong>5 reviewer docs</strong><br />Architecture, benchmarks, reviewer guide, proposal alignment, and upstream plan make the repo easy to evaluate quickly.</td>
+  </tr>
+</table>
 
 ## Mentor Quick Check
 
@@ -161,6 +171,38 @@ The explorer rail now includes a dedicated dataset-info pane with table-level me
 <img src="assets/screenshots/gallery/12_query_planning.png" alt="Query planning pane" width="100%" />
 
 The query-planning card shows estimated full rows, approximate DataFrame size, risk level, and active plot/spatial resolution controls before a full flattening step would happen.
+
+## Real-World Validation: NOAA ERSSTv5
+
+The screenshots below come from the bundled NOAA ERSSTv5 sea-surface-temperature dataset at `assets/sample_data/ersstv5.nc`.
+This validation pass matters because it exercises a real monthly climate dataset with `time`, `lat`, and `lon` coordinates, a nearly 10 million-row full flattening surface, and descending latitude coordinates that forced a real bugfix in the query helper.
+
+<table>
+  <tr>
+    <td width="56%">
+      <img src="assets/screenshots/real_world/01_ersstv5_overview.png" alt="ERSSTv5 spatial overview" width="100%" />
+    </td>
+    <td width="44%">
+      <img src="assets/screenshots/real_world/02_ersstv5_time_analysis.png" alt="ERSSTv5 time analysis" width="100%" />
+    </td>
+  </tr>
+  <tr>
+    <td><strong>Spatial overview:</strong> ERSSTv5 loaded directly into the explorer and rendered as a coordinate-aware SST surface.</td>
+    <td><strong>Time analysis:</strong> 624 monthly observations summarized as a 12-step rolling mean across non-time dimensions.</td>
+  </tr>
+  <tr>
+    <td width="50%">
+      <img src="assets/screenshots/real_world/03_ersstv5_dataset_info.png" alt="ERSSTv5 dataset info and CF metadata" width="100%" />
+    </td>
+    <td width="50%">
+      <img src="assets/screenshots/real_world/04_ersstv5_query_planning.png" alt="ERSSTv5 query planning" width="100%" />
+    </td>
+  </tr>
+  <tr>
+    <td><strong>Dataset info / CF metadata:</strong> runtime, units, coordinate roles, shape, and source attributes remain visible for a real NOAA dataset.</td>
+    <td><strong>Query planning:</strong> filtered ERSSTv5 selections now produce a meaningful cost estimate after fixing descending-latitude range handling.</td>
+  </tr>
+</table>
 
 ### 13. Architecture Diagram
 
@@ -345,10 +387,11 @@ Generated assets:
 - `assets/screenshots/dashboard_desktop.png`
 - `assets/screenshots/dashboard_mobile.png`
 - `assets/screenshots/gallery/*.png`
+- `assets/screenshots/real_world/*.png`
 - `docs/screenshots/story_frames/*.png`
 - `docs/gifs/dashboard_walkthrough.gif`
 
-The gallery screenshots used in this README are exported from the app itself so the repository visuals stay aligned with the current implementation.
+The gallery and real-world screenshots used in this README are exported from the app itself so the repository visuals stay aligned with the current implementation.
 
 ## Repository Layout
 

@@ -9,6 +9,7 @@ from lumen_xarray_lab.dashboard.export_flow import (
     build_capture_plan,
     export_dashboard_html,
     feature_gallery_captures,
+    real_world_gallery_captures,
     make_gif_from_frames,
     write_capture_manifest,
 )
@@ -18,6 +19,7 @@ def test_build_capture_plan():
     plan = build_capture_plan("C:/tmp/lumen-xarray-lab")
     assert str(plan.html_path).endswith("docs\\screenshots\\dashboard_snapshot.html")
     assert str(plan.gallery_dir).endswith("assets\\screenshots\\gallery")
+    assert str(plan.real_world_dir).endswith("assets\\screenshots\\real_world")
     assert str(plan.story_dir).endswith("docs\\screenshots\\story_frames")
     assert str(plan.gif_path).endswith("docs\\gifs\\dashboard_walkthrough.gif")
 
@@ -64,6 +66,16 @@ def test_write_capture_manifest(tmp_path):
     assert manifest.exists()
     text = manifest.read_text(encoding="utf-8")
     assert "html-only" in text
+
+
+def test_real_world_gallery_captures_define_expected_views():
+    captures = real_world_gallery_captures("C:/tmp/lumen-xarray-lab")
+    assert [capture.filename for capture in captures] == [
+        "01_ersstv5_overview.png",
+        "02_ersstv5_time_analysis.png",
+        "03_ersstv5_dataset_info.png",
+        "04_ersstv5_query_planning.png",
+    ]
 
 
 def test_make_gif_from_frames_normalizes_different_sizes(tmp_path):

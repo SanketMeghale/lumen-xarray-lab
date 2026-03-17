@@ -18,6 +18,7 @@ class CapturePlan:
     desktop_png: Path
     mobile_png: Path
     gallery_dir: Path
+    real_world_dir: Path
     story_dir: Path
     manifest_path: Path
     gif_path: Path
@@ -41,6 +42,7 @@ def build_capture_plan(root: str | Path) -> CapturePlan:
         desktop_png=root / "assets" / "screenshots" / "dashboard_desktop.png",
         mobile_png=root / "assets" / "screenshots" / "dashboard_mobile.png",
         gallery_dir=root / "assets" / "screenshots" / "gallery",
+        real_world_dir=root / "assets" / "screenshots" / "real_world",
         story_dir=root / "docs" / "screenshots" / "story_frames",
         manifest_path=root / "docs" / "screenshots" / "capture_manifest.json",
         gif_path=root / "docs" / "gifs" / "dashboard_walkthrough.gif",
@@ -51,6 +53,7 @@ def ensure_capture_dirs(plan: CapturePlan) -> None:
     for path in (plan.html_path, plan.desktop_png, plan.mobile_png, plan.manifest_path, plan.gif_path):
         path.parent.mkdir(parents=True, exist_ok=True)
     plan.gallery_dir.mkdir(parents=True, exist_ok=True)
+    plan.real_world_dir.mkdir(parents=True, exist_ok=True)
     plan.story_dir.mkdir(parents=True, exist_ok=True)
 
 
@@ -273,6 +276,44 @@ def _configure_query_planning(controller: object) -> None:
     explorer._spatial_resolution.value = 16
 
 
+def _select_table(controller: object, table: str) -> None:
+    explorer = controller._explorer
+    if table in explorer._table.options:
+        explorer._table.value = table
+
+
+def _configure_ersstv5_overview(controller: object) -> None:
+    _select_table(controller, "sst")
+    explorer = controller._explorer
+    _set_first_datetime(controller)
+    explorer._chart_type.value = "spatial"
+    explorer._limit.value = 400
+    explorer._output_tabs.active = 0
+
+
+def _configure_ersstv5_time_analysis(controller: object) -> None:
+    _select_table(controller, "sst")
+    explorer = controller._explorer
+    explorer._time_mode.value = "rolling mean"
+    explorer._time_window.value = 12
+    explorer._time_agg.value = "mean"
+    explorer._plot_resolution.value = 160
+    explorer._output_tabs.active = 3
+
+
+def _configure_ersstv5_dataset_info(controller: object) -> None:
+    _select_table(controller, "sst")
+
+
+def _configure_ersstv5_query_planning(controller: object) -> None:
+    _select_table(controller, "sst")
+    explorer = controller._explorer
+    _set_numeric_filter(controller, "lat", (-10.0, 10.0))
+    _set_numeric_filter(controller, "lon", (180.0, 260.0))
+    explorer._plot_resolution.value = 120
+    explorer._spatial_resolution.value = 20
+
+
 def feature_gallery_captures(root: str | Path) -> list[FeatureGalleryCapture]:
     root = Path(root)
     samples = root / "assets" / "sample_data"
@@ -350,6 +391,38 @@ def feature_gallery_captures(root: str | Path) -> list[FeatureGalleryCapture]:
     ]
 
 
+def real_world_gallery_captures(root: str | Path) -> list[FeatureGalleryCapture]:
+    root = Path(root)
+    samples = root / "assets" / "sample_data"
+    ersstv5 = str(samples / "ersstv5.nc")
+    return [
+        FeatureGalleryCapture(
+            uri=ersstv5,
+            filename="01_ersstv5_overview.png",
+            target_selector=".lxl-explorer-output-card",
+            configure=_configure_ersstv5_overview,
+        ),
+        FeatureGalleryCapture(
+            uri=ersstv5,
+            filename="02_ersstv5_time_analysis.png",
+            target_selector=".lxl-explorer-output-card",
+            configure=_configure_ersstv5_time_analysis,
+        ),
+        FeatureGalleryCapture(
+            uri=ersstv5,
+            filename="03_ersstv5_dataset_info.png",
+            target_selector=".lxl-explorer-dataset-info-card",
+            configure=_configure_ersstv5_dataset_info,
+        ),
+        FeatureGalleryCapture(
+            uri=ersstv5,
+            filename="04_ersstv5_query_planning.png",
+            target_selector=".lxl-explorer-query-card",
+            configure=_configure_ersstv5_query_planning,
+        ),
+    ]
+
+
 def capture_feature_gallery(root: str | Path) -> list[Path]:
     root = Path(root)
     plan = build_capture_plan(root)
@@ -367,6 +440,29 @@ def capture_feature_gallery(root: str | Path) -> list[Path]:
                 capture_gallery_png(
                     html_path,
                     plan.gallery_dir / capture.filename,
+                    target_selector=capture.target_selector,
+                )
+            )
+    return rendered
+
+
+def capture_real_world_gallery(root: str | Path) -> list[Path]:
+    root = Path(root)
+    plan = build_capture_plan(root)
+    ensure_capture_dirs(plan)
+    for existing in plan.real_world_dir.glob("*.png"):
+        existing.unlink()
+
+    rendered: list[Path] = []
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmp_root = Path(tmpdir)
+        for capture in real_world_gallery_captures(root):
+            html_path = tmp_root / capture.filename.replace(".png", ".html")
+            export_dashboard_html(html_path, uri=capture.uri, configure=capture.configure)
+            rendered.append(
+                capture_gallery_png(
+                    html_path,
+                    plan.real_world_dir / capture.filename,
                     target_selector=capture.target_selector,
                 )
             )

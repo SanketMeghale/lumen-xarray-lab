@@ -67,6 +67,25 @@ def _normalize_scalar_for_coord(coord: xr.DataArray, value: Any) -> Any:
     return value
 
 
+def _normalize_slice_for_coord(coord: xr.DataArray, value: slice) -> slice:
+    start = _normalize_scalar_for_coord(coord, value.start)
+    stop = _normalize_scalar_for_coord(coord, value.stop)
+    if start is None or stop is None:
+        return slice(start, stop, value.step)
+
+    coord_values = coord.values
+    if coord_values.ndim != 1 or coord_values.size < 2:
+        return slice(start, stop, value.step)
+
+    first = coord_values[0]
+    last = coord_values[-1]
+    descending = first > last
+    lower, upper = (start, stop) if start <= stop else (stop, start)
+    if descending:
+        return slice(upper, lower, value.step)
+    return slice(lower, upper, value.step)
+
+
 def _iter_queryable_coords(arr: xr.DataArray, filterable_coords: list[str] | None = None) -> list[str]:
     allowed = set(filterable_coords) if filterable_coords is not None else None
     return [
@@ -88,15 +107,7 @@ def apply_query_to_array(
         value = _normalize_query_value(raw_value)
         coord = arr.coords[key]
         if isinstance(value, slice):
-            arr = arr.sel(
-                {
-                    key: slice(
-                        _normalize_scalar_for_coord(coord, value.start),
-                        _normalize_scalar_for_coord(coord, value.stop),
-                        value.step,
-                    )
-                }
-            )
+            arr = arr.sel({key: _normalize_slice_for_coord(coord, value)})
         elif isinstance(value, list):
             normalized = [_normalize_scalar_for_coord(coord, item) for item in value]
             arr = arr.sel({key: normalized})
