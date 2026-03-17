@@ -84,8 +84,6 @@ What is intentionally not the main story:
 
 ### 1. Explorer Overview
 
-<img src="assets/screenshots/gallery/01_overview.png" alt="Explorer overview" width="100%" />
-
 Dataset summary, table switching, axis controls, filter controls, and the explorer output surface are all visible in one frame.
 
 ### 2. Chart Output
