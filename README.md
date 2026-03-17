@@ -82,18 +82,8 @@ then inspecting anomaly, rolling-mean, map, or table views in one place.
 | Visual proof | explorer UI, GeoViews maps, desktop/mobile screenshots, overview recording, ERSSTv5 validation | use as proposal and PR support rather than upstream payload |
 | Experimental work | lightweight AI assist and bounded SQL explorer | keep lab-only unless a stronger upstream use case emerges |
 
-## Proof At A Glance
 
-<table>
-  <tr>
-    <td width="25%"><strong>67 passing tests</strong><br />Runtime, explorer, export, transforms, CF logic, AI hooks, and SQL helpers are covered by the current suite.</td>
-    <td width="25%"><strong>29 screenshots and GIFs</strong><br />The main visuals come from the running app rather than static mockups.</td>
-    <td width="25%"><strong>6 bundled datasets</strong><br />Demo, compare, multi-file, curvilinear, and real-world validation datasets are included.</td>
-    <td width="25%"><strong>Real-world validation</strong><br />ERSSTv5 is used to validate real climate workflows and query-planning behavior.</td>
-  </tr>
-</table>
-
-## Next Upstream PR
+## Next Upstream 
 
 The next upstream-ready slice should stay small and reviewable. The exact target
 files are:
