@@ -8,6 +8,7 @@ import numpy as np
 from lumen_xarray_lab.dashboard.export_flow import (
     build_capture_plan,
     export_dashboard_html,
+    feature_gallery_captures,
     make_gif_from_frames,
     write_capture_manifest,
 )
@@ -37,6 +38,21 @@ def test_export_dashboard_html_accepts_configure_callback(tmp_path, synthetic_da
 
     assert output.exists()
     assert called["value"]
+
+
+def test_feature_gallery_captures_define_all_expected_views():
+    captures = feature_gallery_captures("C:/tmp/lumen-xarray-lab")
+    assert [capture.filename for capture in captures] == [
+        "01_overview.png",
+        "02_line_chart.png",
+        "03_spatial_plot.png",
+        "04_data_table.png",
+        "05_statistics.png",
+        "06_compare.png",
+        "07_coverage.png",
+        "08_source_query.png",
+        "09_pseudo_sql.png",
+    ]
 
 
 def test_write_capture_manifest(tmp_path):

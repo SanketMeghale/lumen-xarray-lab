@@ -41,48 +41,67 @@
 
 ## Feature Tour
 
-<table>
-  <tr>
-    <td width="50%">
-      <img src="assets/screenshots/gallery/01_overview.png" alt="Explorer overview" />
-      <p><strong>Explorer overview</strong><br />Dataset summary, table switching, axis controls, chart controls, and query-aware output in one screen.</p>
-    </td>
-    <td width="50%">
-      <img src="assets/screenshots/gallery/02_spatial_plot.png" alt="Spatial plot view" />
-      <p><strong>Spatial plot</strong><br />Latitude and longitude roles are detected and used to unlock a map-style chart mode for gridded data.</p>
-    </td>
-  </tr>
-  <tr>
-    <td width="50%">
-      <img src="assets/screenshots/gallery/03_statistics.png" alt="Statistics panel" />
-      <p><strong>Statistics</strong><br />Quick descriptive summaries for the current selection make it easier to validate filters before exporting or plotting.</p>
-    </td>
-    <td width="50%">
-      <img src="assets/screenshots/gallery/06_compare.png" alt="Compare view" />
-      <p><strong>Compare variables</strong><br />Side-by-side variable comparisons work when a dataset exposes multiple variables on shared coordinates.</p>
-    </td>
-  </tr>
-  <tr>
-    <td width="50%">
-      <img src="assets/screenshots/gallery/04_source_query.png" alt="Source query preview" />
-      <p><strong>Source query preview</strong><br />Shows the shape of the xarray-backed source call that would be used for the current filters and table.</p>
-    </td>
-    <td width="50%">
-      <img src="assets/screenshots/gallery/05_pseudo_sql.png" alt="Pseudo SQL view" />
-      <p><strong>Pseudo SQL</strong><br />A reviewer-friendly translation layer for people who want to reason about the query like a table projection and filter.</p>
-    </td>
-  </tr>
-  <tr>
-    <td width="50%">
-      <img src="assets/screenshots/gallery/07_coverage.png" alt="Coverage analysis" />
-      <p><strong>Coverage</strong><br />Selection coverage highlights how much of each dimension remains after coordinate filtering.</p>
-    </td>
-    <td width="50%">
-      <img src="assets/diagrams/xarray_source_proposal_diagram.svg" alt="Proposal architecture diagram" />
-      <p><strong>Architecture diagram</strong><br />The repo also includes proposal-ready visuals explaining how xarray selection stays upstream of the DataFrame boundary.</p>
-    </td>
-  </tr>
-</table>
+Every image below is generated from the dashboard itself through the scripted capture flow.
+
+### 1. Explorer Overview
+
+<img src="assets/screenshots/gallery/01_overview.png" alt="Explorer overview" width="100%" />
+
+Dataset summary, table switching, axis controls, filter controls, and the explorer output surface are all visible in one frame.
+
+### 2. Chart Output
+
+<img src="assets/screenshots/gallery/02_line_chart.png" alt="Line chart output" width="100%" />
+
+The default chart view shows sampled, query-aware table output as a chart without flattening the entire dataset.
+
+### 3. Spatial Plot
+
+<img src="assets/screenshots/gallery/03_spatial_plot.png" alt="Spatial plot view" width="100%" />
+
+Latitude and longitude roles are detected and used to unlock a spatial chart mode for gridded scientific data.
+
+### 4. Data Table
+
+<img src="assets/screenshots/gallery/04_data_table.png" alt="Data table view" width="100%" />
+
+The `Data` tab exposes the current sampled selection as a readable table for quick inspection and validation.
+
+### 5. Statistics
+
+<img src="assets/screenshots/gallery/05_statistics.png" alt="Statistics panel" width="100%" />
+
+The `Statistics` tab summarizes nulls, unique counts, ranges, and numeric aggregates for the current selection.
+
+### 6. Compare Variables
+
+<img src="assets/screenshots/gallery/06_compare.png" alt="Compare view" width="100%" />
+
+The compare workflow aligns two variables on shared coordinates and surfaces joined rows plus difference and ratio metrics.
+
+### 7. Coverage
+
+<img src="assets/screenshots/gallery/07_coverage.png" alt="Coverage analysis" width="100%" />
+
+Coverage analysis shows how much of each dimension remains after coordinate-aware filtering.
+
+### 8. Source Query
+
+<img src="assets/screenshots/gallery/08_source_query.png" alt="Source query preview" width="100%" />
+
+The source query preview makes the xarray-backed `source.get(...)` call visible for the active explorer selection.
+
+### 9. Pseudo SQL
+
+<img src="assets/screenshots/gallery/09_pseudo_sql.png" alt="Pseudo SQL view" width="100%" />
+
+Pseudo SQL gives reviewers a familiar table-style mental model for the current selection and row limit.
+
+### 10. Architecture Diagram
+
+<img src="assets/diagrams/xarray_source_proposal_diagram.svg" alt="Proposal architecture diagram" width="100%" />
+
+The repo also includes proposal-ready visuals explaining how xarray selection stays upstream of the DataFrame boundary.
 
 ## Why This Repo Exists
 

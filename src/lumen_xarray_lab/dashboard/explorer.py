@@ -163,7 +163,7 @@ class ExplorerView(Viewer):
             title="Select Data to Explore",
             collapsed=False,
             sizing_mode="stretch_width",
-            css_classes=["lxl-paper-card"],
+            css_classes=["lxl-paper-card", "lxl-explorer-dataset-card"],
             styles=paper_styles,
         )
         visual_card = pn.Card(
@@ -178,7 +178,7 @@ class ExplorerView(Viewer):
             title="Visualization",
             collapsed=False,
             sizing_mode="stretch_width",
-            css_classes=["lxl-paper-card"],
+            css_classes=["lxl-paper-card", "lxl-explorer-visual-card"],
             styles=paper_styles,
         )
         filter_card = pn.Card(
@@ -192,7 +192,7 @@ class ExplorerView(Viewer):
             title="Filters",
             collapsed=False,
             sizing_mode="stretch_width",
-            css_classes=["lxl-paper-card"],
+            css_classes=["lxl-paper-card", "lxl-explorer-filter-card"],
             styles=paper_styles,
         )
         compare_card = pn.Card(
@@ -207,7 +207,7 @@ class ExplorerView(Viewer):
             title="Actions",
             collapsed=False,
             sizing_mode="stretch_width",
-            css_classes=["lxl-paper-card"],
+            css_classes=["lxl-paper-card", "lxl-explorer-action-card"],
             styles=paper_styles,
         )
 
@@ -220,6 +220,23 @@ class ExplorerView(Viewer):
             ("Source Query", self._query),
             ("Pseudo SQL", self._sql),
             sizing_mode="stretch_width",
+        )
+
+        self._selection_card = pn.Card(
+            self._summary,
+            title="Selection Summary",
+            collapsed=False,
+            sizing_mode="stretch_width",
+            css_classes=["lxl-paper-card", "lxl-explorer-selection-card"],
+            styles=paper_styles,
+        )
+        self._output_card = pn.Card(
+            self._output_tabs,
+            title="Explorer Output",
+            collapsed=False,
+            sizing_mode="stretch_width",
+            css_classes=["lxl-paper-card", "lxl-explorer-output-card"],
+            styles=paper_styles,
         )
 
         self._layout = pn.Row(
@@ -236,27 +253,14 @@ class ExplorerView(Viewer):
             pn.Column(
                 self._selection_banner,
                 pn.Row(
-                    pn.Card(
-                        self._summary,
-                        title="Selection Summary",
-                        collapsed=False,
-                        sizing_mode="stretch_width",
-                        css_classes=["lxl-paper-card"],
-                        styles=paper_styles,
-                    ),
+                    self._selection_card,
                     sizing_mode="stretch_width",
                 ),
-                pn.Card(
-                    self._output_tabs,
-                    title="Explorer Output",
-                    collapsed=False,
-                    sizing_mode="stretch_width",
-                    css_classes=["lxl-paper-card"],
-                    styles=paper_styles,
-                ),
+                self._output_card,
                 sizing_mode="stretch_width",
             ),
             sizing_mode="stretch_width",
+            css_classes=["lxl-explorer-root"],
         )
 
     @property

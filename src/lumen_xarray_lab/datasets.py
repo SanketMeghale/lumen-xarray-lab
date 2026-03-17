@@ -350,6 +350,10 @@ def sample_table_dataframe(
         else:
             arr = arr.sel({key: _normalize_scalar_for_coord(coord, value)})
 
+    if arr.ndim and any(int(size) == 0 for size in arr.sizes.values()):
+        ordered = [*queryable, table]
+        return pd.DataFrame(columns=[col for col in ordered if col in ordered])
+
     if limit > 0 and arr.ndim:
         limited = arr
         dims = list(limited.dims)
@@ -358,6 +362,9 @@ def sample_table_dataframe(
             trailing = 1
             for tail_dim in dims[i + 1 :]:
                 trailing *= int(limited.sizes[tail_dim])
+            if trailing == 0:
+                limited = limited.isel({dim: slice(0, 0)})
+                continue
             max_size = max(1, min(size, int(np.ceil(limit / trailing))))
             if size > max_size:
                 limited = limited.isel({dim: slice(0, max_size)})

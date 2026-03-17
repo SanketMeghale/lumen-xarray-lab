@@ -26,6 +26,14 @@ class CapturePlan:
         return {key: str(value) for key, value in asdict(self).items()}
 
 
+@dataclass(frozen=True)
+class FeatureGalleryCapture:
+    uri: str
+    filename: str
+    target_selector: str
+    configure: Callable[[object], None] | None = None
+
+
 def build_capture_plan(root: str | Path) -> CapturePlan:
     root = Path(root)
     return CapturePlan(
@@ -179,10 +187,10 @@ def capture_dashboard_story_frames(
 def capture_gallery_png(
     html_path: str | Path,
     output_path: str | Path,
-    clip: dict[str, int],
+    target_selector: str,
     width: int = 1600,
-    height: int = 1200,
-    wait_ms: int = 1800,
+    height: int = 1800,
+    wait_ms: int = 2200,
 ) -> Path:
     try:
         from playwright.sync_api import sync_playwright
@@ -200,9 +208,115 @@ def capture_gallery_png(
         page = browser.new_page(viewport={"width": width, "height": height})
         page.goto(html_url, wait_until="networkidle")
         page.wait_for_timeout(wait_ms)
-        page.screenshot(path=str(target), clip=clip)
+        locator = page.locator(target_selector).first
+        locator.scroll_into_view_if_needed()
+        page.wait_for_timeout(400)
+        locator.screenshot(path=str(target))
         browser.close()
     return target
+
+
+def _set_numeric_filter(controller: object, name: str, value: tuple[float, float]) -> None:
+    widget = controller._explorer.filter_widgets.get(name)
+    if widget is not None:
+        widget.value = value
+
+
+def _set_first_datetime(controller: object, name: str = "time") -> None:
+    widget = controller._explorer.filter_widgets.get(name)
+    if widget is not None and hasattr(widget, "start"):
+        widget.value = (widget.start, widget.start)
+
+
+def _configure_line_chart(controller: object) -> None:
+    explorer = controller._explorer
+    _set_first_datetime(controller)
+    _set_numeric_filter(controller, "lat", (70.0, 70.0))
+    if "lon" in explorer._x.options:
+        explorer._x.value = "lon"
+    explorer._limit.value = 60
+    explorer._output_tabs.active = 0
+
+
+def _configure_spatial_plot(controller: object) -> None:
+    explorer = controller._explorer
+    _set_first_datetime(controller)
+    explorer._chart_type.value = "spatial"
+    explorer._limit.value = 250
+    explorer._output_tabs.active = 0
+
+
+def _configure_filtered_query(controller: object, tab_index: int) -> None:
+    explorer = controller._explorer
+    _set_numeric_filter(controller, "lon", (220.0, 300.0))
+    explorer._limit.value = 120
+    explorer._output_tabs.active = tab_index
+
+
+def _configure_compare(controller: object) -> None:
+    explorer = controller._explorer
+    explorer._compare_table.value = "humidity"
+    explorer._output_tabs.active = 3
+
+
+def feature_gallery_captures(root: str | Path) -> list[FeatureGalleryCapture]:
+    root = Path(root)
+    samples = root / "assets" / "sample_data"
+    return [
+        FeatureGalleryCapture(
+            uri=str(samples / "air_temperature.nc"),
+            filename="01_overview.png",
+            target_selector=".lxl-explorer-root",
+        ),
+        FeatureGalleryCapture(
+            uri=str(samples / "air_temperature.nc"),
+            filename="02_line_chart.png",
+            target_selector=".lxl-explorer-output-card",
+            configure=_configure_line_chart,
+        ),
+        FeatureGalleryCapture(
+            uri=str(samples / "air_temperature.nc"),
+            filename="03_spatial_plot.png",
+            target_selector=".lxl-explorer-output-card",
+            configure=_configure_spatial_plot,
+        ),
+        FeatureGalleryCapture(
+            uri=str(samples / "air_temperature.nc"),
+            filename="04_data_table.png",
+            target_selector=".lxl-explorer-output-card",
+            configure=lambda controller: _configure_filtered_query(controller, 1),
+        ),
+        FeatureGalleryCapture(
+            uri=str(samples / "air_temperature.nc"),
+            filename="05_statistics.png",
+            target_selector=".lxl-explorer-output-card",
+            configure=lambda controller: _configure_filtered_query(controller, 2),
+        ),
+        FeatureGalleryCapture(
+            uri=str(samples / "compare_weather.nc"),
+            filename="06_compare.png",
+            target_selector=".lxl-explorer-output-card",
+            configure=_configure_compare,
+        ),
+        FeatureGalleryCapture(
+            uri=str(samples / "air_temperature.nc"),
+            filename="07_coverage.png",
+            target_selector=".lxl-explorer-output-card",
+            configure=lambda controller: _configure_filtered_query(controller, 4),
+        ),
+        FeatureGalleryCapture(
+            uri=str(samples / "air_temperature.nc"),
+            filename="08_source_query.png",
+            target_selector=".lxl-explorer-output-card",
+            configure=lambda controller: _configure_filtered_query(controller, 5),
+        ),
+        FeatureGalleryCapture(
+            uri=str(samples / "air_temperature.nc"),
+            filename="09_pseudo_sql.png",
+            target_selector=".lxl-explorer-output-card",
+            configure=lambda controller: _configure_filtered_query(controller, 6),
+        ),
+    ]
 
 
 def capture_feature_gallery(root: str | Path) -> list[Path]:
@@ -212,68 +326,19 @@ def capture_feature_gallery(root: str | Path) -> list[Path]:
     for existing in plan.gallery_dir.glob("*.png"):
         existing.unlink()
 
-    samples = root / "assets" / "sample_data"
-    output_clip = {"x": 520, "y": 440, "width": 1010, "height": 690}
-    overview_clip = {"x": 250, "y": 70, "width": 1290, "height": 960}
-
-    captures: list[tuple[str, str, Callable[[object], None] | None, dict[str, int]]] = [
-        (
-            str(samples / "air_temperature.nc"),
-            "01_overview.png",
-            None,
-            overview_clip,
-        ),
-        (
-            str(samples / "air_temperature.nc"),
-            "02_spatial_plot.png",
-            lambda controller: (
-                setattr(controller._explorer._chart_type, "value", "spatial"),
-                setattr(controller._explorer._output_tabs, "active", 0),
-            ),
-            output_clip,
-        ),
-        (
-            str(samples / "air_temperature.nc"),
-            "03_statistics.png",
-            lambda controller: setattr(controller._explorer._output_tabs, "active", 2),
-            output_clip,
-        ),
-        (
-            str(samples / "air_temperature.nc"),
-            "04_source_query.png",
-            lambda controller: setattr(controller._explorer._output_tabs, "active", 5),
-            output_clip,
-        ),
-        (
-            str(samples / "air_temperature.nc"),
-            "05_pseudo_sql.png",
-            lambda controller: setattr(controller._explorer._output_tabs, "active", 6),
-            output_clip,
-        ),
-        (
-            str(samples / "compare_weather.nc"),
-            "06_compare.png",
-            lambda controller: (
-                setattr(controller._explorer._compare_table, "value", "humidity"),
-                setattr(controller._explorer._output_tabs, "active", 3),
-            ),
-            output_clip,
-        ),
-        (
-            str(samples / "air_temperature.nc"),
-            "07_coverage.png",
-            lambda controller: setattr(controller._explorer._output_tabs, "active", 4),
-            output_clip,
-        ),
-    ]
-
     rendered: list[Path] = []
     with tempfile.TemporaryDirectory() as tmpdir:
         tmp_root = Path(tmpdir)
-        for uri, filename, configure, clip in captures:
-            html_path = tmp_root / filename.replace(".png", ".html")
-            export_dashboard_html(html_path, uri=uri, configure=configure)
-            rendered.append(capture_gallery_png(html_path, plan.gallery_dir / filename, clip=clip))
+        for capture in feature_gallery_captures(root):
+            html_path = tmp_root / capture.filename.replace(".png", ".html")
+            export_dashboard_html(html_path, uri=capture.uri, configure=capture.configure)
+            rendered.append(
+                capture_gallery_png(
+                    html_path,
+                    plan.gallery_dir / capture.filename,
+                    target_selector=capture.target_selector,
+                )
+            )
     return rendered
 
 
