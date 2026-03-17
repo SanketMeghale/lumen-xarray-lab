@@ -13,6 +13,7 @@
 <p align="center">
   <a href="docs/architecture.md">Architecture</a> |
   <a href="docs/benchmarks.md">Benchmarks</a> |
+  <a href="docs/reviewer-guide.md">Reviewer Guide</a> |
   <a href="docs/upstream-plan.md">Upstream Plan</a> |
   <a href="examples/dashboard_app.py">Dashboard App</a> |
   <a href="assets/diagrams/xarray_source_proposal_diagram.svg">Proposal Diagram</a>
@@ -48,6 +49,19 @@ What is intentionally not the main story:
 - replacing upstream `lumen`
 - claiming distributed execution or SQL support as finished work
 - treating the lab repo as the core implementation instead of proposal evidence
+
+## Why This Stands Out
+
+The strongest version of this project is not "more features than another demo."
+It is a more reviewable and more upstream-credible prototype.
+
+- **Upstream-first:** the repo is built to support `lumen`, not compete with it.
+- **Real proof:** the screenshots, GIFs, and explorer flows are generated from the running app.
+- **Clear boundary:** xarray stays responsible for multidimensional selection, while Lumen still sees stable tabular outputs.
+- **Honest limits:** experimental pieces are labeled as experimental instead of being mixed into the core story.
+- **Reviewer efficiency:** architecture, benchmarks, screenshots, tests, and upstream plan are easy to inspect in a few minutes.
+
+If you want the fast review path, start with [`docs/reviewer-guide.md`](docs/reviewer-guide.md).
 
 ## Preview
 
