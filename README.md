@@ -13,10 +13,15 @@
 <p align="center">
   <a href="docs/architecture.md">Architecture</a> |
   <a href="docs/benchmarks.md">Benchmarks</a> |
+  <a href="docs/proposal-alignment.md">Proposal Alignment</a> |
   <a href="docs/reviewer-guide.md">Reviewer Guide</a> |
   <a href="docs/upstream-plan.md">Upstream Plan</a> |
   <a href="examples/dashboard_app.py">Dashboard App</a> |
   <a href="assets/diagrams/xarray_source_proposal_diagram.svg">Proposal Diagram</a>
+</p>
+
+<p align="center">
+  <strong>xarray-native selection. Lumen-native integration. Proposal-ready proof.</strong>
 </p>
 
 > **GSoC reviewer summary**
@@ -24,7 +29,28 @@
 > - **Goal:** prove that Lumen can support xarray datasets without losing its tabular source boundary.
 > - **Already working here:** runnable explorer, tested source/runtime adapter, coordinate-aware filtering, screenshots, GIFs, and benchmark notes.
 > - **Upstream position:** this repo is a companion prototype, not a replacement for upstream `lumen`.
-> - **Best files to inspect first:** [`docs/architecture.md`](docs/architecture.md), [`docs/upstream-plan.md`](docs/upstream-plan.md), [`src/lumen_xarray_lab/datasets.py`](src/lumen_xarray_lab/datasets.py), and [`examples/dashboard_app.py`](examples/dashboard_app.py).
+> - **Best files to inspect first:** [`docs/architecture.md`](docs/architecture.md), [`docs/proposal-alignment.md`](docs/proposal-alignment.md), [`docs/upstream-plan.md`](docs/upstream-plan.md), [`src/lumen_xarray_lab/datasets.py`](src/lumen_xarray_lab/datasets.py), and [`examples/dashboard_app.py`](examples/dashboard_app.py).
+
+## Proof At A Glance
+
+<table>
+  <tr>
+    <td width="25%"><strong>46 passing tests</strong><br />Explorer, runtime, export, schema, CF, and benchmark helpers are covered by the current suite.</td>
+    <td width="25%"><strong>9 feature screenshots</strong><br />Every gallery image in this README is generated from the running app, not mocked manually.</td>
+    <td width="25%"><strong>5 sample datasets</strong><br />The repo includes built-in data for line, spatial, compare, and coordinate-intelligence demos.</td>
+    <td width="25%"><strong>5 reviewer docs</strong><br />Architecture, benchmarks, reviewer guide, proposal alignment, and upstream plan make the repo easy to evaluate quickly.</td>
+  </tr>
+</table>
+
+## Mentor Quick Check
+
+If a mentor wants to evaluate the prototype fast, these are the highest-signal checks:
+
+1. Open the GIF and screenshot gallery to verify the explorer is already usable.
+2. Read [`docs/proposal-alignment.md`](docs/proposal-alignment.md) to see how the current repo maps to the proposal milestones.
+3. Read [`docs/architecture.md`](docs/architecture.md) to confirm the xarray-to-DataFrame boundary is explicit.
+4. Inspect [`src/lumen_xarray_lab/datasets.py`](src/lumen_xarray_lab/datasets.py) and [`src/lumen_xarray_lab/cf.py`](src/lumen_xarray_lab/cf.py) for the core runtime and coordinate-role logic.
+5. Run `pytest -q` and `panel serve examples/dashboard_app.py --show` to validate the proof locally.
 
 ## Reviewer Snapshot
 
@@ -62,6 +88,7 @@ It is a more reviewable and more upstream-credible prototype.
 - **Reviewer efficiency:** architecture, benchmarks, screenshots, tests, and upstream plan are easy to inspect in a few minutes.
 
 If you want the fast review path, start with [`docs/reviewer-guide.md`](docs/reviewer-guide.md).
+If you want the proposal-to-prototype mapping, start with [`docs/proposal-alignment.md`](docs/proposal-alignment.md).
 
 ## Preview
 

@@ -1,211 +1,203 @@
 <svg width="1600" height="980" viewBox="0 0 1600 980" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="bg" x1="120" y1="60" x2="1480" y2="920" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#F7F5EF"/>
-      <stop offset="0.48" stop-color="#F8FAF8"/>
-      <stop offset="1" stop-color="#EEF3F7"/>
+    <linearGradient id="page" x1="108" y1="72" x2="1508" y2="932" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F7FBFF"/>
+      <stop offset="0.55" stop-color="#F4F8FC"/>
+      <stop offset="1" stop-color="#EDF4FB"/>
     </linearGradient>
-    <linearGradient id="titleAccent" x1="240" y1="92" x2="1040" y2="92" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#D84F2A"/>
-      <stop offset="1" stop-color="#116466"/>
+    <linearGradient id="hero" x1="86" y1="84" x2="1180" y2="84" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1976D2"/>
+      <stop offset="1" stop-color="#26A69A"/>
     </linearGradient>
-    <linearGradient id="leftPanel" x1="72" y1="184" x2="426" y2="788" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#FFF8ED"/>
-      <stop offset="1" stop-color="#FFF1D9"/>
+    <linearGradient id="laneLeft" x1="74" y1="286" x2="424" y2="814" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFF8EE"/>
+      <stop offset="1" stop-color="#FFF3E0"/>
     </linearGradient>
-    <linearGradient id="corePanel" x1="470" y1="180" x2="1130" y2="790" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#F5FBFB"/>
-      <stop offset="1" stop-color="#E8F5F5"/>
+    <linearGradient id="laneCenter" x1="462" y1="286" x2="1134" y2="814" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F5FAFF"/>
+      <stop offset="1" stop-color="#EAF3FF"/>
     </linearGradient>
-    <linearGradient id="rightPanel" x1="1170" y1="180" x2="1528" y2="790" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#F7F8FF"/>
-      <stop offset="1" stop-color="#EBEEFF"/>
+    <linearGradient id="laneRight" x1="1172" y1="286" x2="1526" y2="814" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F5FBFA"/>
+      <stop offset="1" stop-color="#EAF8F5"/>
     </linearGradient>
-    <linearGradient id="flowAccent" x1="482" y1="770" x2="1118" y2="770" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#D84F2A"/>
-      <stop offset="1" stop-color="#116466"/>
-    </linearGradient>
-    <filter id="softShadow" x="-60" y="-60" width="1720" height="1100" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
-      <feDropShadow dx="0" dy="16" stdDeviation="20" flood-color="#22313F" flood-opacity="0.10"/>
+    <filter id="shellShadow" x="18" y="22" width="1564" height="934" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="18" stdDeviation="20" flood-color="#0F172A" flood-opacity="0.10"/>
     </filter>
-    <filter id="chipShadow" x="-30" y="-30" width="1660" height="180" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
-      <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#22313F" flood-opacity="0.08"/>
+    <filter id="cardShadow" x="-24" y="-24" width="1648" height="1040" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#0F172A" flood-opacity="0.07"/>
     </filter>
-    <marker id="arrow" markerWidth="14" markerHeight="14" refX="11" refY="7" orient="auto" markerUnits="strokeWidth">
-      <path d="M2 2L11 7L2 12" fill="none" stroke="#315B63" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+    <marker id="arrow" markerWidth="14" markerHeight="14" refX="12" refY="7" orient="auto" markerUnits="strokeWidth">
+      <path d="M2 2L12 7L2 12" stroke="#2B5876" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
     </marker>
     <style>
-      .canvas { fill: url(#bg); }
-      .panel-title { font: 700 28px 'IBM Plex Sans', 'Segoe UI', Arial, sans-serif; fill: #13212B; letter-spacing: -0.02em; }
-      .section-label { font: 700 16px 'IBM Plex Sans', 'Segoe UI', Arial, sans-serif; fill: #4D5B66; letter-spacing: 0.12em; text-transform: uppercase; }
-      .title { font: 700 42px 'IBM Plex Sans', 'Segoe UI', Arial, sans-serif; fill: #13212B; letter-spacing: -0.03em; }
-      .subtitle { font: 400 19px 'IBM Plex Sans', 'Segoe UI', Arial, sans-serif; fill: #495A63; }
-      .card-title { font: 700 21px 'IBM Plex Sans', 'Segoe UI', Arial, sans-serif; fill: #142630; letter-spacing: -0.02em; }
-      .card-body { font: 400 16px 'IBM Plex Sans', 'Segoe UI', Arial, sans-serif; fill: #495A63; }
-      .mini { font: 600 14px 'IBM Plex Sans', 'Segoe UI', Arial, sans-serif; fill: #586972; letter-spacing: 0.05em; text-transform: uppercase; }
-      .chip { font: 700 16px 'IBM Plex Sans', 'Segoe UI', Arial, sans-serif; fill: #18313A; }
-      .caption { font: 500 14px 'IBM Plex Mono', 'Consolas', monospace; fill: #47616A; }
-      .metric { font: 700 17px 'IBM Plex Sans', 'Segoe UI', Arial, sans-serif; fill: #14353D; }
-      .muted { fill: #6B7C86; }
-      .line { stroke: #315B63; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; marker-end: url(#arrow); }
-      .dashed { stroke: #7E97A2; stroke-width: 2.5; stroke-dasharray: 10 10; fill: none; }
-      .solid-outline { stroke: #D7E0E5; stroke-width: 2; fill: white; }
-      .panel-outline { stroke: rgba(19,33,43,0.08); stroke-width: 2; }
-      .pill { stroke: none; }
+      .title { font: 700 46px 'IBM Plex Sans', 'Segoe UI', Arial, sans-serif; fill: #0F172A; letter-spacing: -0.03em; }
+      .subtitle { font: 400 20px 'IBM Plex Sans', 'Segoe UI', Arial, sans-serif; fill: #475569; }
+      .section { font: 700 16px 'IBM Plex Sans', 'Segoe UI', Arial, sans-serif; fill: #2563EB; letter-spacing: 0.14em; }
+      .laneTitle { font: 700 30px 'IBM Plex Sans', 'Segoe UI', Arial, sans-serif; fill: #0F172A; letter-spacing: -0.02em; }
+      .laneText { font: 400 17px 'IBM Plex Sans', 'Segoe UI', Arial, sans-serif; fill: #52606D; }
+      .cardMini { font: 700 13px 'IBM Plex Sans', 'Segoe UI', Arial, sans-serif; fill: #64748B; letter-spacing: 0.12em; }
+      .cardTitle { font: 700 22px 'IBM Plex Sans', 'Segoe UI', Arial, sans-serif; fill: #0F172A; letter-spacing: -0.02em; }
+      .cardText { font: 400 16px 'IBM Plex Sans', 'Segoe UI', Arial, sans-serif; fill: #52606D; }
+      .impactTitle { font: 700 18px 'IBM Plex Sans', 'Segoe UI', Arial, sans-serif; fill: #0F172A; }
+      .impactText { font: 400 14px 'IBM Plex Sans', 'Segoe UI', Arial, sans-serif; fill: #64748B; }
+      .calloutTitle { font: 700 18px 'IBM Plex Sans', 'Segoe UI', Arial, sans-serif; fill: #0F172A; }
+      .calloutBody { font: 400 15px 'IBM Plex Sans', 'Segoe UI', Arial, sans-serif; fill: #52606D; }
+      .badge { font: 700 15px 'IBM Plex Sans', 'Segoe UI', Arial, sans-serif; fill: #0F172A; }
+      .caption { font: 600 14px 'IBM Plex Sans', 'Segoe UI', Arial, sans-serif; fill: #64748B; }
+      .mono { font: 600 14px 'IBM Plex Mono', 'Consolas', monospace; fill: #35546B; }
+      .border { stroke: #D7E2EE; stroke-width: 2; }
+      .arrowLine { stroke: #2B5876; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; marker-end: url(#arrow); }
+      .dash { stroke: #8FB3CC; stroke-width: 2.5; stroke-dasharray: 10 10; fill: none; }
     </style>
   </defs>
 
-  <rect class="canvas" width="1600" height="980" rx="36"/>
+  <rect width="1600" height="980" rx="34" fill="url(#page)"/>
+  <circle cx="1458" cy="136" r="154" fill="#DCEBFA"/>
+  <circle cx="150" cy="884" r="168" fill="#E6F7F3"/>
+  <circle cx="1462" cy="866" r="188" fill="#EAF2FB"/>
 
-  <g opacity="0.55">
-    <circle cx="1410" cy="118" r="156" fill="#DCE8F0"/>
-    <circle cx="1474" cy="884" r="194" fill="#E9DED4"/>
-    <circle cx="154" cy="890" r="180" fill="#E5EEE7"/>
+  <g filter="url(#shellShadow)">
+    <rect x="40" y="36" width="1520" height="908" rx="30" fill="#FFFFFF" fill-opacity="0.90"/>
   </g>
 
-  <g filter="url(#softShadow)">
-    <rect x="40" y="38" width="1520" height="904" rx="32" fill="white" fill-opacity="0.84"/>
+  <rect x="86" y="86" width="146" height="14" rx="7" fill="url(#hero)"/>
+  <text x="86" y="148" class="section">PROPOSAL ARCHITECTURE</text>
+  <text x="86" y="208" class="title">Native xarray Support in Lumen</text>
+  <text x="86" y="248" class="subtitle">Keep xarray-native coordinate semantics inside the source layer, then expose a stable DataFrame contract to the rest of Lumen.</text>
+
+  <g filter="url(#cardShadow)">
+    <rect x="1228" y="84" width="278" height="164" rx="24" fill="#F8FBFF" class="border"/>
+  </g>
+  <text x="1254" y="124" class="calloutTitle">Reviewer takeaway</text>
+  <text x="1254" y="154" class="calloutBody">1. Query inside xarray first.</text>
+  <text x="1254" y="182" class="calloutBody">2. Flatten only after reduction.</text>
+  <text x="1254" y="210" class="calloutBody">3. Keep the Lumen integration surface unchanged.</text>
+
+  <g filter="url(#cardShadow)">
+    <rect x="86" y="272" width="340" height="544" rx="30" fill="url(#laneLeft)" class="border"/>
+    <rect x="462" y="272" width="672" height="544" rx="30" fill="url(#laneCenter)" class="border"/>
+    <rect x="1170" y="272" width="356" height="544" rx="30" fill="url(#laneRight)" class="border"/>
   </g>
 
-  <rect x="78" y="86" width="120" height="14" rx="7" fill="url(#titleAccent)"/>
-  <text x="78" y="150" class="section-label">System Architecture</text>
-  <text x="78" y="206" class="title">XarraySource Architecture for Scientific Data in Lumen</text>
-  <text x="78" y="244" class="subtitle">Preserve xarray-native coordinate semantics internally, expose a stable DataFrame contract externally.</text>
+  <rect x="104" y="292" width="104" height="30" rx="15" fill="#FFE8C7"/>
+  <text x="130" y="312" class="caption">inputs</text>
+  <rect x="486" y="292" width="152" height="30" rx="15" fill="#DCEBFA"/>
+  <text x="518" y="312" class="caption">xarray source core</text>
+  <rect x="1196" y="292" width="176" height="30" rx="15" fill="#DDF3EE"/>
+  <text x="1230" y="312" class="caption">lumen boundary</text>
 
-  <g filter="url(#chipShadow)">
-    <rect x="78" y="864" width="258" height="60" rx="18" fill="#FFF5E7"/>
-    <rect x="350" y="864" width="250" height="60" rx="18" fill="#EAF8F5"/>
-    <rect x="614" y="864" width="268" height="60" rx="18" fill="#EEF2FF"/>
-    <rect x="896" y="864" width="242" height="60" rx="18" fill="#F8F0EC"/>
-    <rect x="1152" y="864" width="332" height="60" rx="18" fill="#EFF5F9"/>
+  <text x="104" y="360" class="laneTitle">Data Inputs</text>
+  <text x="104" y="390" class="laneText">Multiple storage forms feed one acquisition path</text>
+  <text x="104" y="412" class="laneText">and resolve into an `xr.Dataset`.</text>
+
+  <rect x="104" y="426" width="304" height="100" rx="22" fill="#FFFFFF" class="border"/>
+  <rect x="130" y="450" width="42" height="42" rx="11" fill="#F59E0B"/>
+  <path d="M142 463H160M142 474H160M142 485H160" stroke="#7C4A03" stroke-width="3" stroke-linecap="round"/>
+  <text x="192" y="463" class="cardTitle">NetCDF files</text>
+  <text x="192" y="489" class="cardText">Local or remote `.nc` datasets</text>
+  <text x="192" y="511" class="cardText">opened through `xr.open_dataset(...)`.</text>
+
+  <rect x="104" y="544" width="304" height="100" rx="22" fill="#FFFFFF" class="border"/>
+  <rect x="130" y="567" width="42" height="42" rx="11" fill="#14B8A6"/>
+  <rect x="138" y="575" width="10" height="10" rx="2" fill="#D9FBF6"/>
+  <rect x="154" y="575" width="10" height="10" rx="2" fill="#D9FBF6"/>
+  <rect x="138" y="591" width="10" height="10" rx="2" fill="#D9FBF6"/>
+  <rect x="154" y="591" width="10" height="10" rx="2" fill="#D9FBF6"/>
+  <text x="192" y="582" class="cardTitle">Zarr stores</text>
+  <text x="192" y="608" class="cardText">Directory-backed scientific stores</text>
+  <text x="192" y="630" class="cardText">selected explicitly or by format detection.</text>
+
+  <rect x="104" y="662" width="304" height="100" rx="22" fill="#FFFFFF" class="border"/>
+  <circle cx="151" cy="712" r="22" fill="#8B5CF6"/>
+  <circle cx="143" cy="705" r="4" fill="#F3E8FF"/>
+  <circle cx="159" cy="705" r="4" fill="#F3E8FF"/>
+  <path d="M137 720C142 715 160 715 165 720" stroke="#F3E8FF" stroke-width="3" stroke-linecap="round"/>
+  <text x="192" y="700" class="cardTitle">In-memory datasets</text>
+  <text x="192" y="726" class="cardText">Notebook, test, and prototype flows</text>
+  <text x="192" y="748" class="cardText">can inject `xarray.Dataset` directly.</text>
+
+  <rect x="104" y="780" width="304" height="28" rx="14" fill="#FFF7EC"/>
+  <text x="124" y="799" class="mono">validated xr.Dataset</text>
+
+  <text x="492" y="360" class="laneTitle">XarraySource Core</text>
+  <text x="492" y="388" class="laneText">This is the upstream seam: xarray handles multidimensional logic.</text>
+  <text x="492" y="406" class="laneText">Lumen still sees a normal source contract.</text>
+
+  <rect x="492" y="426" width="286" height="132" rx="22" fill="#FFFFFF" class="border"/>
+  <text x="518" y="458" class="cardMini">ACQUISITION</text>
+  <text x="518" y="492" class="cardTitle">Dataset loading</text>
+  <text x="518" y="520" class="cardText">Resolve relative paths, distinguish</text>
+  <text x="518" y="542" class="cardText">local vs remote URIs, and choose</text>
+  <text x="518" y="564" class="cardText">NetCDF vs Zarr safely.</text>
+
+  <rect x="818" y="426" width="286" height="132" rx="22" fill="#FFFFFF" class="border"/>
+  <text x="844" y="458" class="cardMini">TABLE MAPPING</text>
+  <text x="844" y="492" class="cardTitle">Variable to table resolution</text>
+  <text x="844" y="520" class="cardText">Each `data_var` becomes a logical table</text>
+  <text x="844" y="542" class="cardText">so pipelines and views still operate</text>
+  <text x="844" y="564" class="cardText">through familiar Lumen semantics.</text>
+
+  <rect x="492" y="584" width="286" height="162" rx="22" fill="#FFFFFF" class="border"/>
+  <text x="518" y="616" class="cardMini">QUERY ENGINE</text>
+  <text x="518" y="650" class="cardTitle">Coordinate-aware selection</text>
+  <text x="518" y="678" class="cardText">Scalars, ranges, datetimes, and</text>
+  <text x="518" y="700" class="cardText">descending-coordinate handling stay</text>
+  <text x="518" y="722" class="cardText">inside xarray via `.sel(...)`.</text>
+
+  <rect x="818" y="584" width="286" height="162" rx="22" fill="#FFFFFF" class="border"/>
+  <text x="844" y="616" class="cardMini">INTROSPECTION</text>
+  <text x="844" y="650" class="cardTitle">Schema and metadata</text>
+  <text x="844" y="678" class="cardText">Expose dims, units, bounds, types,</text>
+  <text x="844" y="700" class="cardText">queryable coordinates, and detected</text>
+  <text x="844" y="722" class="cardText">roles like time / lat / lon / vertical.</text>
+
+  <rect x="560" y="770" width="478" height="56" rx="18" fill="#FFFFFF" stroke="#1976D2" stroke-width="3"/>
+  <text x="584" y="805" class="cardTitle">Late DataFrame flattening + `max_rows` guard</text>
+
+  <rect x="478" y="408" width="640" height="350" rx="28" class="dash"/>
+  <text x="1200" y="360" class="laneTitle">Lumen Boundary</text>
+  <text x="1200" y="390" class="laneText">Everything downstream continues to interact with</text>
+  <text x="1200" y="412" class="laneText">a normal source and normal tables.</text>
+
+  <rect x="1200" y="434" width="298" height="92" rx="22" fill="#FFFFFF" class="border"/>
+  <text x="1226" y="466" class="cardMini">SOURCE CONTRACT</text>
+  <text x="1226" y="498" class="mono">`get_tables`, `get_schema`</text>
+  <text x="1226" y="520" class="mono">`get_metadata`, `get`</text>
+
+  <rect x="1200" y="550" width="298" height="104" rx="22" fill="#FFFFFF" class="border"/>
+  <text x="1226" y="582" class="cardMini">PIPELINE LAYER</text>
+  <text x="1226" y="616" class="cardTitle">Schema-driven filters</text>
+  <text x="1226" y="640" class="cardText">UI widgets derive from queryable coordinates</text>
+
+  <rect x="1200" y="678" width="298" height="104" rx="22" fill="#FFFFFF" class="border"/>
+  <text x="1226" y="710" class="cardMini">VIEW LAYER</text>
+  <text x="1226" y="744" class="cardTitle">Tables, charts, dashboards</text>
+  <text x="1226" y="768" class="cardText">Consumes ordinary DataFrames with no xarray-specific logic</text>
+
+  <path d="M408 476H462" class="arrowLine"/>
+  <path d="M408 594H462" class="arrowLine"/>
+  <path d="M408 712H462" class="arrowLine"/>
+  <path d="M778 492H818" class="arrowLine"/>
+  <path d="M778 664H818" class="arrowLine"/>
+  <path d="M962 746V770" class="arrowLine"/>
+  <path d="M1038 798H1170" class="arrowLine"/>
+  <path d="M1348 526V550" class="arrowLine"/>
+  <path d="M1348 654V678" class="arrowLine"/>
+
+  <g filter="url(#cardShadow)">
+    <rect x="86" y="850" width="1420" height="82" rx="24" fill="#F8FBFF" class="border"/>
   </g>
-  <text x="108" y="901" class="chip">Filter before flattening</text>
-  <text x="378" y="901" class="chip">1D coordinates as UI surface</text>
-  <text x="642" y="901" class="chip">Schema and metadata preserved</text>
-  <text x="924" y="901" class="chip">Explicit safety guards</text>
-  <text x="1182" y="901" class="chip">Fits existing Source -&gt; Pipeline -&gt; View flow</text>
+  <text x="112" y="884" class="calloutTitle">Why this increases proposal strength</text>
+  <text x="112" y="912" class="calloutBody">The design is incremental, reviewable, and upstream-friendly: xarray complexity stays isolated, proof is demoable now, and the Lumen-facing API remains familiar.</text>
 
-  <g>
-    <rect x="72" y="294" width="356" height="506" rx="30" fill="url(#leftPanel)" class="panel-outline"/>
-    <text x="102" y="340" class="panel-title">Data Inputs</text>
-    <text x="102" y="370" class="card-body">Multiple storage backends converge into a single dataset acquisition layer.</text>
+  <rect x="86" y="84" width="102" height="34" rx="17" fill="#E1F0FF"/>
+  <text x="111" y="106" class="badge">Lumen</text>
+  <rect x="202" y="84" width="110" height="34" rx="17" fill="#DFF7F1"/>
+  <text x="228" y="106" class="badge">xarray</text>
 
-    <rect x="102" y="408" width="296" height="98" rx="22" class="solid-outline"/>
-    <rect x="126" y="434" width="38" height="46" rx="10" fill="#F2B46D"/>
-    <path d="M139 447H151M139 459H151M139 471H151" stroke="#7A4C14" stroke-width="3" stroke-linecap="round"/>
-    <text x="184" y="446" class="card-title">NetCDF Files</text>
-    <text x="184" y="472" class="card-body">Local or remote `.nc` datasets opened</text>
-    <text x="184" y="493" class="card-body">through `xr.open_dataset(...)`.</text>
-
-    <rect x="102" y="526" width="296" height="98" rx="22" class="solid-outline"/>
-    <rect x="124" y="549" width="44" height="44" rx="12" fill="#80C3C5"/>
-    <rect x="132" y="557" width="12" height="12" rx="3" fill="#CFEDEE"/>
-    <rect x="148" y="557" width="12" height="12" rx="3" fill="#CFEDEE"/>
-    <rect x="132" y="573" width="12" height="12" rx="3" fill="#CFEDEE"/>
-    <rect x="148" y="573" width="12" height="12" rx="3" fill="#CFEDEE"/>
-    <text x="184" y="564" class="card-title">Zarr Stores</text>
-    <text x="184" y="590" class="card-body">Explicit or auto-detected directory-backed</text>
-    <text x="184" y="611" class="card-body">stores with local marker inspection.</text>
-
-    <rect x="102" y="644" width="296" height="98" rx="22" class="solid-outline"/>
-    <circle cx="146" cy="693" r="22" fill="#A497E4"/>
-    <circle cx="138" cy="685" r="4" fill="#EAE6FB"/>
-    <circle cx="155" cy="685" r="4" fill="#EAE6FB"/>
-    <path d="M132 702C137 696 155 696 160 702" stroke="#EAE6FB" stroke-width="3" stroke-linecap="round"/>
-    <text x="184" y="682" class="card-title">In-memory Dataset</text>
-    <text x="184" y="708" class="card-body">Direct `xarray.Dataset` injection for notebooks,</text>
-    <text x="184" y="729" class="card-body">experiments, and tests.</text>
-
-    <rect x="102" y="760" width="296" height="56" rx="18" fill="#FFFFFF" fill-opacity="0.72" stroke="#E9D8B7" stroke-width="2"/>
-    <text x="126" y="794" class="metric">Output from this lane: a validated `xr.Dataset`</text>
+  <g filter="url(#cardShadow)">
+    <rect x="930" y="84" width="264" height="54" rx="18" fill="#FFFFFF" class="border"/>
   </g>
-
-  <g>
-    <rect x="472" y="294" width="656" height="506" rx="30" fill="url(#corePanel)" class="panel-outline"/>
-    <text x="504" y="340" class="panel-title">XarraySource Core</text>
-    <text x="504" y="370" class="card-body">All multidimensional complexity stays inside the source layer, which lets the rest of Lumen remain unchanged.</text>
-
-    <rect x="504" y="408" width="276" height="132" rx="24" class="solid-outline"/>
-    <text x="530" y="446" class="mini">Loader</text>
-    <text x="530" y="478" class="card-title">Dataset Acquisition</text>
-    <text x="530" y="506" class="card-body">Resolves relative paths,</text>
-    <text x="530" y="528" class="card-body">distinguishes remote URIs, and selects</text>
-    <text x="530" y="550" class="card-body">NetCDF vs Zarr backends safely.</text>
-
-    <rect x="824" y="408" width="272" height="132" rx="24" class="solid-outline"/>
-    <text x="850" y="446" class="mini">Resolver</text>
-    <text x="850" y="478" class="card-title">Variable to Table Mapping</text>
-    <text x="850" y="506" class="card-body">Each `Dataset.data_var` becomes a logical</text>
-    <text x="850" y="528" class="card-body">Lumen table, keeping the table contract</text>
-    <text x="850" y="550" class="card-body">predictable for pipelines and views.</text>
-
-    <rect x="504" y="566" width="276" height="154" rx="24" class="solid-outline"/>
-    <text x="530" y="604" class="mini">Query Engine</text>
-    <text x="530" y="636" class="card-title">Coordinate-aware Selection</text>
-    <text x="530" y="664" class="card-body">Supports scalars, inclusive ranges,</text>
-    <text x="530" y="686" class="card-body">datetime normalization, and descending</text>
-    <text x="530" y="708" class="card-body">coordinate handling through `.sel(...)`.</text>
-
-    <rect x="824" y="566" width="272" height="154" rx="24" class="solid-outline"/>
-    <text x="850" y="604" class="mini">Introspection</text>
-    <text x="850" y="636" class="card-title">Schema and Metadata</text>
-    <text x="850" y="664" class="card-body">Derives JSON-schema-compatible field types,</text>
-    <text x="850" y="686" class="card-body">bounds, dims, units, descriptions,</text>
-    <text x="850" y="708" class="card-body">queryable coords, and auxiliary coords.</text>
-
-    <rect x="562" y="740" width="476" height="82" rx="24" fill="#FFFFFF" stroke="url(#flowAccent)" stroke-width="3"/>
-    <text x="590" y="773" class="mini">Boundary Adapter</text>
-    <text x="590" y="804" class="card-title">Late DataFrame Flattening + `max_rows` Protection</text>
-
-    <rect x="486" y="392" width="628" height="342" rx="28" class="dashed"/>
-    <text x="928" y="386" class="caption">xarray-native operations stay inside this boundary</text>
-  </g>
-
-  <g>
-    <rect x="1172" y="294" width="356" height="506" rx="30" fill="url(#rightPanel)" class="panel-outline"/>
-    <text x="1202" y="340" class="panel-title">Lumen Integration</text>
-    <text x="1202" y="370" class="card-body">The rest of the framework continues to interact with a normal source.</text>
-
-    <rect x="1202" y="412" width="296" height="92" rx="22" class="solid-outline"/>
-    <text x="1228" y="448" class="mini">Source Contract</text>
-    <text x="1228" y="476" class="card-title">`get_tables`, `get_schema`, `get_metadata`, `get`</text>
-
-    <rect x="1202" y="530" width="296" height="98" rx="22" class="solid-outline"/>
-    <text x="1228" y="566" class="mini">Pipeline Layer</text>
-    <text x="1228" y="594" class="card-title">Schema-driven Filters</text>
-    <text x="1228" y="617" class="card-body">Widgets derive from exposed coordinate fields</text>
-
-    <rect x="1202" y="654" width="296" height="98" rx="22" class="solid-outline"/>
-    <text x="1228" y="690" class="mini">View Layer</text>
-    <text x="1228" y="718" class="card-title">Tables, Charts, Dashboards</text>
-    <text x="1228" y="741" class="card-body">Consumes ordinary DataFrames with no xarray-specific logic</text>
-  </g>
-
-  <path d="M398 458H470" class="line"/>
-  <path d="M398 576H470" class="line"/>
-  <path d="M398 693H470" class="line"/>
-
-  <path d="M780 474H824" class="line"/>
-  <path d="M780 642H824" class="line"/>
-  <path d="M964 720V740" class="line"/>
-
-  <path d="M1038 780H1172" class="line"/>
-
-  <path d="M1350 504V530" class="line"/>
-  <path d="M1350 628V654" class="line"/>
-
-  <g>
-    <rect x="76" y="258" width="106" height="28" rx="14" fill="#FFF0D1"/>
-    <text x="103" y="278" class="caption">inputs</text>
-    <rect x="476" y="258" width="142" height="28" rx="14" fill="#DFF4F2"/>
-    <text x="505" y="278" class="caption">processing core</text>
-    <rect x="1176" y="258" width="168" height="28" rx="14" fill="#E7EBFF"/>
-    <text x="1205" y="278" class="caption">framework boundary</text>
-  </g>
-
-  <g>
-    <text x="78" y="824" class="section-label">Execution Principle</text>
-    <path d="M244 818H664" class="line"/>
-    <text x="684" y="824" class="card-body">Select in xarray first, materialize as DataFrame only after the result has been reduced and validated.</text>
-  </g>
+  <text x="956" y="117" class="mono">filter first -> flatten last</text>
 </svg>
