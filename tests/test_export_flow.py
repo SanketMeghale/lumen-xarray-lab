@@ -52,6 +52,9 @@ def test_feature_gallery_captures_define_all_expected_views():
         "07_coverage.png",
         "08_source_query.png",
         "09_pseudo_sql.png",
+        "10_time_analysis.png",
+        "11_dataset_info.png",
+        "12_query_planning.png",
     ]
 
 

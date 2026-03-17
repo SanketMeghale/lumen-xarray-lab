@@ -83,6 +83,33 @@ def test_explorer_statistics_and_coverage(synthetic_dataset):
     assert coverage["selected_unique"].min() >= 1
 
 
+def test_explorer_builds_time_analysis_and_query_cost(synthetic_dataset):
+    state = DashboardState.from_dataset(synthetic_dataset)
+    explorer = ExplorerView(state=state)
+    explorer._time_mode.value = "trend"
+
+    summary, plot = explorer._build_time_analysis_output()
+    cost = explorer.current_query_cost()
+
+    assert "Time dimension" in summary
+    assert "Trend slope" in summary
+    assert isinstance(plot, LayoutDOM)
+    assert cost["selected_rows"] == 8
+    assert cost["risk"] in {"low", "medium", "high"}
+
+
+def test_explorer_builds_dataset_info_and_cf_metadata(synthetic_dataset):
+    state = DashboardState.from_dataset(synthetic_dataset)
+    explorer = ExplorerView(state=state)
+
+    dataset_info = explorer._build_dataset_info_html()
+    cf_frame = explorer._build_cf_dataframe()
+
+    assert "Untitled dataset" in dataset_info
+    assert "temperature" in dataset_info
+    assert set(cf_frame["coordinate"]) == {"time", "lat", "lon"}
+
+
 def test_explorer_builds_comparison_dataframe(multi_table_dataset):
     state = DashboardState.from_dataset(multi_table_dataset)
     explorer = ExplorerView(state=state)

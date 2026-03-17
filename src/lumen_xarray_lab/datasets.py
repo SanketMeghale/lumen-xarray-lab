@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
+from math import prod
 import sys
 from typing import Any
 
@@ -64,6 +65,98 @@ def _normalize_scalar_for_coord(coord: xr.DataArray, value: Any) -> Any:
         if isinstance(value, pd.Timestamp):
             return value.to_datetime64()
     return value
+
+
+def _iter_queryable_coords(arr: xr.DataArray, filterable_coords: list[str] | None = None) -> list[str]:
+    allowed = set(filterable_coords) if filterable_coords is not None else None
+    return [
+        name
+        for name, coord in arr.coords.items()
+        if coord.ndim == 1 and (allowed is None or name in allowed)
+    ]
+
+
+def apply_query_to_array(
+    arr: xr.DataArray,
+    query: dict[str, Any] | None = None,
+    filterable_coords: list[str] | None = None,
+) -> xr.DataArray:
+    queryable = set(_iter_queryable_coords(arr, filterable_coords))
+    for key, raw_value in (query or {}).items():
+        if key.startswith("__") or key not in queryable:
+            continue
+        value = _normalize_query_value(raw_value)
+        coord = arr.coords[key]
+        if isinstance(value, slice):
+            arr = arr.sel(
+                {
+                    key: slice(
+                        _normalize_scalar_for_coord(coord, value.start),
+                        _normalize_scalar_for_coord(coord, value.stop),
+                        value.step,
+                    )
+                }
+            )
+        elif isinstance(value, list):
+            normalized = [_normalize_scalar_for_coord(coord, item) for item in value]
+            arr = arr.sel({key: normalized})
+        else:
+            arr = arr.sel({key: _normalize_scalar_for_coord(coord, value)})
+    return arr
+
+
+def _dtype_itemsize(dtype: np.dtype) -> int:
+    if dtype.kind in {"U", "S", "O"}:
+        return 32
+    return max(int(getattr(dtype, "itemsize", 8)), 1)
+
+
+def estimate_query_cost(
+    dataset: xr.Dataset,
+    table: str,
+    query: dict[str, Any] | None = None,
+    filterable_coords: list[str] | None = None,
+) -> dict[str, Any]:
+    if table not in dataset.data_vars:
+        raise KeyError(f"Unknown table {table!r}.")
+
+    base = dataset[table]
+    filtered = apply_query_to_array(base, query=query, filterable_coords=filterable_coords)
+    queryable = _iter_queryable_coords(base, filterable_coords)
+    selected_sizes = {dim: int(filtered.sizes.get(dim, 0)) for dim in base.dims}
+    full_rows = int(prod(int(size) for size in base.sizes.values())) if base.ndim else 1
+    selected_rows = int(prod(selected_sizes.values())) if selected_sizes else 1
+    columns = [*queryable, table]
+    bytes_per_row = sum(_dtype_itemsize(base.coords[name].dtype) for name in queryable if name in base.coords)
+    bytes_per_row += _dtype_itemsize(base.dtype)
+    approx_mb = (selected_rows * bytes_per_row) / (1024 * 1024) if selected_rows else 0.0
+
+    if selected_rows >= 500_000 or approx_mb >= 128:
+        risk = "high"
+    elif selected_rows >= 50_000 or approx_mb >= 16:
+        risk = "medium"
+    else:
+        risk = "low"
+
+    warning = None
+    if risk == "high":
+        warning = "Materializing the full filtered selection would likely be expensive."
+    elif risk == "medium":
+        warning = "The filtered selection is moderate in size; previewing is safer than full flattening."
+
+    return {
+        "table": table,
+        "columns": columns,
+        "column_count": len(columns),
+        "selected_sizes": selected_sizes,
+        "full_rows": full_rows,
+        "selected_rows": selected_rows,
+        "selection_ratio": (selected_rows / full_rows) if full_rows else 0.0,
+        "bytes_per_row": bytes_per_row,
+        "approx_dataframe_mb": round(approx_mb, 2),
+        "risk": risk,
+        "warning": warning,
+    }
 
 
 def _dtype_to_schema(dtype: np.dtype) -> dict[str, Any]:
@@ -140,39 +233,10 @@ class LabXarraySourceAdapter:
         return arr if arr.name == table else arr.rename(table)
 
     def _iter_queryable_coords(self, arr: xr.DataArray) -> list[str]:
-        names: list[str] = []
-        allowed = set(self.filterable_coords) if self.filterable_coords is not None else None
-        for name, coord in arr.coords.items():
-            if coord.ndim != 1:
-                continue
-            if allowed is not None and name not in allowed:
-                continue
-            names.append(name)
-        return names
+        return _iter_queryable_coords(arr, self.filterable_coords)
 
     def _apply_query(self, arr: xr.DataArray, query: dict[str, Any]) -> xr.DataArray:
-        queryable = set(self._iter_queryable_coords(arr))
-        for key, raw_value in query.items():
-            if key.startswith("__") or key not in queryable:
-                continue
-            value = _normalize_query_value(raw_value)
-            coord = arr.coords[key]
-            if isinstance(value, slice):
-                arr = arr.sel(
-                    {
-                        key: slice(
-                            _normalize_scalar_for_coord(coord, value.start),
-                            _normalize_scalar_for_coord(coord, value.stop),
-                            value.step,
-                        )
-                    }
-                )
-            elif isinstance(value, list):
-                normalized = [_normalize_scalar_for_coord(coord, item) for item in value]
-                arr = arr.sel({key: normalized})
-            else:
-                arr = arr.sel({key: _normalize_scalar_for_coord(coord, value)})
-        return arr
+        return apply_query_to_array(arr, query=query, filterable_coords=self.filterable_coords)
 
     def _to_dataframe(self, arr: xr.DataArray, table: str) -> pd.DataFrame:
         if arr.ndim == 0:
@@ -322,33 +386,8 @@ def sample_table_dataframe(
     if table not in dataset.data_vars:
         raise KeyError(f"Unknown table {table!r}.")
     arr = dataset[table]
-    allowed = set(filterable_coords) if filterable_coords is not None else None
-    queryable = [
-        name
-        for name, coord in arr.coords.items()
-        if coord.ndim == 1 and (allowed is None or name in allowed)
-    ]
-
-    for key, raw_value in (query or {}).items():
-        if key.startswith("__") or key not in queryable:
-            continue
-        value = _normalize_query_value(raw_value)
-        coord = arr.coords[key]
-        if isinstance(value, slice):
-            arr = arr.sel(
-                {
-                    key: slice(
-                        _normalize_scalar_for_coord(coord, value.start),
-                        _normalize_scalar_for_coord(coord, value.stop),
-                        value.step,
-                    )
-                }
-            )
-        elif isinstance(value, list):
-            normalized = [_normalize_scalar_for_coord(coord, item) for item in value]
-            arr = arr.sel({key: normalized})
-        else:
-            arr = arr.sel({key: _normalize_scalar_for_coord(coord, value)})
+    queryable = _iter_queryable_coords(arr, filterable_coords)
+    arr = apply_query_to_array(arr, query=query, filterable_coords=filterable_coords)
 
     if arr.ndim and any(int(size) == 0 for size in arr.sizes.values()):
         ordered = [*queryable, table]

@@ -35,8 +35,8 @@
 
 <table>
   <tr>
-    <td width="25%"><strong>46 passing tests</strong><br />Explorer, runtime, export, schema, CF, and benchmark helpers are covered by the current suite.</td>
-    <td width="25%"><strong>9 feature screenshots</strong><br />Every gallery image in this README is generated from the running app, not mocked manually.</td>
+    <td width="25%"><strong>49 passing tests</strong><br />Explorer, runtime, export, schema, CF, and benchmark helpers are covered by the current suite.</td>
+    <td width="25%"><strong>12 feature screenshots</strong><br />Every gallery image in this README is generated from the running app, not mocked manually.</td>
     <td width="25%"><strong>5 sample datasets</strong><br />The repo includes built-in data for line, spatial, compare, and coordinate-intelligence demos.</td>
     <td width="25%"><strong>5 reviewer docs</strong><br />Architecture, benchmarks, reviewer guide, proposal alignment, and upstream plan make the repo easy to evaluate quickly.</td>
   </tr>
@@ -168,7 +168,25 @@ The source query preview makes the xarray-backed `source.get(...)` call visible 
 
 Pseudo SQL gives reviewers a familiar table-style mental model for the current selection and row limit.
 
-### 10. Architecture Diagram
+### 10. Time Analysis
+
+<img src="assets/screenshots/gallery/10_time_analysis.png" alt="Time analysis view" width="100%" />
+
+The new `Time Analysis` tab adds a more scientific workflow: aggregate over non-time dimensions, switch between raw, rolling mean, anomaly, cumulative, and trend views, and inspect the resulting time series directly.
+
+### 11. Dataset Info / CF Metadata
+
+<img src="assets/screenshots/gallery/11_dataset_info.png" alt="Dataset info and CF metadata pane" width="100%" />
+
+The explorer rail now includes a dedicated dataset-info pane with table-level metadata, CF-style coordinate metadata, runtime details, and a compact attribute preview.
+
+### 12. Query Planning
+
+<img src="assets/screenshots/gallery/12_query_planning.png" alt="Query planning pane" width="100%" />
+
+The query-planning card shows estimated full rows, approximate DataFrame size, risk level, and active plot/spatial resolution controls before a full flattening step would happen.
+
+### 13. Architecture Diagram
 
 <img src="assets/diagrams/xarray_source_proposal_diagram.svg" alt="Proposal architecture diagram" width="100%" />
 
@@ -212,6 +230,9 @@ This repository is not meant to replace upstream `lumen`. It is a companion repo
 - coordinate-aware filters derived from queryable 1D coordinates
 - line, scatter, bar, histogram, and spatial chart modes
 - statistics, coverage, comparison, and export panels
+- dedicated time-analysis workflows for rolling mean, anomaly, cumulative, and trend views
+- dataset info and CF metadata pane in the explorer rail
+- query cost estimation plus plot/spatial resolution controls
 - source query and pseudo-SQL preview
 - coordinate-role detection for `time`, `latitude`, `longitude`, and `vertical`
 - schema enrichment and runtime/source diagnostics

@@ -206,7 +206,7 @@ def capture_gallery_png(
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch()
         page = browser.new_page(viewport={"width": width, "height": height})
-        page.goto(html_url, wait_until="networkidle")
+        page.goto(html_url, wait_until="load")
         page.wait_for_timeout(wait_ms)
         locator = page.locator(target_selector).first
         locator.scroll_into_view_if_needed()
@@ -256,7 +256,21 @@ def _configure_filtered_query(controller: object, tab_index: int) -> None:
 def _configure_compare(controller: object) -> None:
     explorer = controller._explorer
     explorer._compare_table.value = "humidity"
+    explorer._output_tabs.active = 4
+
+
+def _configure_time_analysis(controller: object) -> None:
+    explorer = controller._explorer
+    explorer._time_mode.value = "rolling mean"
+    explorer._time_window.value = 12
+    explorer._plot_resolution.value = 175
     explorer._output_tabs.active = 3
+
+
+def _configure_query_planning(controller: object) -> None:
+    explorer = controller._explorer
+    explorer._plot_resolution.value = 100
+    explorer._spatial_resolution.value = 16
 
 
 def feature_gallery_captures(root: str | Path) -> list[FeatureGalleryCapture]:
@@ -302,19 +316,36 @@ def feature_gallery_captures(root: str | Path) -> list[FeatureGalleryCapture]:
             uri=str(samples / "air_temperature.nc"),
             filename="07_coverage.png",
             target_selector=".lxl-explorer-output-card",
-            configure=lambda controller: _configure_filtered_query(controller, 4),
+            configure=lambda controller: _configure_filtered_query(controller, 5),
         ),
         FeatureGalleryCapture(
             uri=str(samples / "air_temperature.nc"),
             filename="08_source_query.png",
             target_selector=".lxl-explorer-output-card",
-            configure=lambda controller: _configure_filtered_query(controller, 5),
+            configure=lambda controller: _configure_filtered_query(controller, 6),
         ),
         FeatureGalleryCapture(
             uri=str(samples / "air_temperature.nc"),
             filename="09_pseudo_sql.png",
             target_selector=".lxl-explorer-output-card",
-            configure=lambda controller: _configure_filtered_query(controller, 6),
+            configure=lambda controller: _configure_filtered_query(controller, 7),
+        ),
+        FeatureGalleryCapture(
+            uri=str(samples / "air_temperature.nc"),
+            filename="10_time_analysis.png",
+            target_selector=".lxl-explorer-output-card",
+            configure=_configure_time_analysis,
+        ),
+        FeatureGalleryCapture(
+            uri=str(samples / "air_temperature.nc"),
+            filename="11_dataset_info.png",
+            target_selector=".lxl-explorer-dataset-info-card",
+        ),
+        FeatureGalleryCapture(
+            uri=str(samples / "air_temperature.nc"),
+            filename="12_query_planning.png",
+            target_selector=".lxl-explorer-query-card",
+            configure=_configure_query_planning,
         ),
     ]
 
