@@ -26,9 +26,7 @@
 
 
 
-<p align="center">
-  <strong><a href="docs/media/overview_recording_2026-03-17.mp4">Overview Recording (MP4)</a></strong>
-</p>
+
 
 ## The Problem
 
