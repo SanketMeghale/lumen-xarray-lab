@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from lumen_xarray_lab.benchmark_utils import (
+    benchmark_context,
     estimate_dataframe_bytes,
     estimate_flattened_rows,
     estimate_row_explosion,
@@ -23,6 +24,14 @@ def test_estimate_row_explosion():
 
 def test_format_bytes():
     assert format_bytes(1024) == "1.00 KB"
+
+
+def test_benchmark_context_includes_runtime_metadata():
+    context = benchmark_context("python benchmarks/demo.py")
+
+    assert context["python"]
+    assert context["platform"]
+    assert context["command"] == "python benchmarks/demo.py"
 
 
 def test_write_benchmark_report(tmp_path):

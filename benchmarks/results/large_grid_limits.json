@@ -1,0 +1,16 @@
+{
+  "generated_at_utc": "2026-03-17T02:01:14.335196+00:00",
+  "platform": "Windows-11-10.0.22000-SP0",
+  "python": "3.13.5",
+  "cpu_count": 4,
+  "command": "python benchmarks/large_grid_limits.py",
+  "memory_gb": 7.88,
+  "sizes": {
+    "time": 365,
+    "lat": 721,
+    "lon": 1440
+  },
+  "large_grid_rows": 378957600,
+  "large_grid_estimated_bytes": 12126643200,
+  "large_grid_estimated_human": "11.29 GB"
+}

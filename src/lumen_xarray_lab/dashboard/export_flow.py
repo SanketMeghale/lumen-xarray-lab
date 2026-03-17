@@ -137,14 +137,17 @@ def capture_dashboard_story_frames(
 
     target_dir = Path(output_dir)
     target_dir.mkdir(parents=True, exist_ok=True)
+    for existing in target_dir.glob("*.png"):
+        existing.unlink()
     html_url = _as_file_url(html_path)
     sequence = [
-        ("chart", "Chart"),
+        ("overview", None),
         ("data", "Data"),
+        ("statistics", "Statistics"),
         ("source_query", "Source Query"),
         ("pseudo_sql", "Pseudo SQL"),
     ]
-    clip = {"x": 250, "y": 360, "width": 1220, "height": 760}
+    clip = {"x": 40, "y": 190, "width": 1510, "height": 900}
     captured: list[Path] = []
 
     with sync_playwright() as playwright:
@@ -154,7 +157,7 @@ def capture_dashboard_story_frames(
         page.wait_for_timeout(wait_ms)
 
         for index, (slug, label) in enumerate(sequence, start=1):
-            if label != "Chart":
+            if label is not None:
                 page.locator(f"text={label}").first.click()
                 page.wait_for_timeout(600)
             target = target_dir / f"{index:02d}_{slug}.png"

@@ -1,0 +1,18 @@
+{
+  "generated_at_utc": "2026-03-17T02:01:14.335783+00:00",
+  "platform": "Windows-11-10.0.22000-SP0",
+  "python": "3.13.5",
+  "cpu_count": 4,
+  "command": "python benchmarks/flattening_vs_sql.py",
+  "memory_gb": 7.88,
+  "sizes": {
+    "time": 2920,
+    "lat": 25,
+    "lon": 53
+  },
+  "flattened_rows": 3869000,
+  "estimated_dataframe_bytes": 123808000,
+  "estimated_dataframe_human": "118.07 MB",
+  "row_explosion_vs_single_row_source": 3869000.0,
+  "sql_note": "SQL comparison is a placeholder until the prototype is implemented."
+}

@@ -12,7 +12,7 @@ if str(SRC) not in sys.path:
 
 import xarray as xr
 
-from lumen_xarray_lab.benchmark_utils import write_benchmark_report
+from lumen_xarray_lab.benchmark_utils import benchmark_context, write_benchmark_report
 from lumen_xarray_lab.datasets import load_demo_dataset
 
 
@@ -34,7 +34,9 @@ def main() -> None:
     report = write_benchmark_report(
         "netcdf_vs_zarr",
         {
+            **benchmark_context("python benchmarks/netcdf_vs_zarr.py"),
             "netcdf_open_seconds": round(netcdf_seconds, 4),
+            "zarr_available": False,
             "zarr_note": "Add Zarr timing once the environment is configured with zarr.",
         },
         ROOT / "benchmarks" / "results",

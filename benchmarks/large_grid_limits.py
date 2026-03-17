@@ -9,6 +9,7 @@ if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
 from lumen_xarray_lab.benchmark_utils import (
+    benchmark_context,
     estimate_dataframe_bytes,
     estimate_flattened_rows,
     format_bytes,
@@ -24,6 +25,7 @@ def main() -> None:
     report = write_benchmark_report(
         "large_grid_limits",
         {
+            **benchmark_context("python benchmarks/large_grid_limits.py"),
             "sizes": sizes,
             "large_grid_rows": rows,
             "large_grid_estimated_bytes": bytes_estimate,

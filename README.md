@@ -53,7 +53,7 @@ Still experimental:
 
 - AI upload integration beyond simple previews
 - SQL-backed xarray access
-- benchmark publication with larger datasets and raw result snapshots
+- broader benchmark coverage across larger datasets and machines
 - upstream extraction of stable lab features
 
 ## Runtime Design

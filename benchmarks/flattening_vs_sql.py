@@ -9,6 +9,7 @@ if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
 from lumen_xarray_lab.benchmark_utils import (
+    benchmark_context,
     estimate_dataframe_bytes,
     estimate_flattened_rows,
     estimate_row_explosion,
@@ -23,6 +24,7 @@ def main() -> None:
     columns = len(sizes) + 1
     bytes_estimate = estimate_dataframe_bytes(rows, columns)
     metrics = {
+        **benchmark_context("python benchmarks/flattening_vs_sql.py"),
         "sizes": sizes,
         "flattened_rows": rows,
         "estimated_dataframe_bytes": bytes_estimate,
