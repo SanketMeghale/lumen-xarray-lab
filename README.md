@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-  Companion demos, experiments, benchmarks, and proposal assets for bringing <strong>xarray</strong> into <strong>Lumen</strong>.
+  Prototype evidence for bringing a native <strong>xarray</strong> workflow into <strong>Lumen</strong>.
 </p>
 
 <p align="center">
@@ -18,11 +18,44 @@
   <a href="assets/diagrams/xarray_source_proposal_diagram.svg">Proposal Diagram</a>
 </p>
 
+> **GSoC reviewer summary**
+>
+> - **Goal:** prove that Lumen can support xarray datasets without losing its tabular source boundary.
+> - **Already working here:** runnable explorer, tested source/runtime adapter, coordinate-aware filtering, screenshots, GIFs, and benchmark notes.
+> - **Upstream position:** this repo is a companion prototype, not a replacement for upstream `lumen`.
+> - **Best files to inspect first:** [`docs/architecture.md`](docs/architecture.md), [`docs/upstream-plan.md`](docs/upstream-plan.md), [`src/lumen_xarray_lab/datasets.py`](src/lumen_xarray_lab/datasets.py), and [`examples/dashboard_app.py`](examples/dashboard_app.py).
+
+## Reviewer Snapshot
+
+This repository exists to de-risk an upstream `XarraySource` contribution.
+
+Lumen is designed around tabular sources. xarray is multidimensional, coordinate-aware, and often too large to flatten naively. The prototype here focuses on the narrow integration boundary that matters for upstream review:
+
+- apply coordinate-aware selection in xarray first
+- expose stable DataFrame results only at the source boundary
+- surface schema, metadata, and detected coordinate roles in the UI
+- document the limits honestly instead of over-claiming scope
+
+What is intentionally in scope here:
+
+- proof that an explorer-style experience can sit on top of xarray-backed data
+- evidence that query, preview, statistics, coverage, and plotting can work on filtered selections
+- benchmark notes showing why `filter first, flatten last` is necessary
+- a clear split between upstream-ready work and experimental work
+
+What is intentionally not the main story:
+
+- replacing upstream `lumen`
+- claiming distributed execution or SQL support as finished work
+- treating the lab repo as the core implementation instead of proposal evidence
+
 ## Preview
 
 <p align="center">
   <img src="docs/gifs/dashboard_walkthrough.gif" alt="Explorer walkthrough GIF" width="100%" />
 </p>
+
+The GIF below is meant to answer the reviewer question quickly: does the prototype already behave like a usable xarray-backed explorer, or is it still a concept? This repo is structured so the answer is visible before reading any code.
 
 <table>
   <tr>
