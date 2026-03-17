@@ -27,6 +27,12 @@
 
 
 <p align="center">
+  <a href="docs/media/overview_recording_2026-03-17.mp4">
+    <img src="assets/screenshots/dashboard_desktop.png" alt="Overview recording preview" width="100%" />
+  </a>
+</p>
+
+<p align="center">
   <strong><a href="docs/media/overview_recording_2026-03-17.mp4">Overview Recording (MP4)</a></strong>
 </p>
 
@@ -39,9 +45,18 @@
 > - **Upstream position:** this repo is a companion prototype, not a replacement for upstream `lumen`.
 > - **Best files to inspect first:** [`docs/architecture.md`](docs/architecture.md), [`docs/proposal-alignment.md`](docs/proposal-alignment.md), [`docs/upstream-plan.md`](docs/upstream-plan.md), [`src/lumen_xarray_lab/datasets.py`](src/lumen_xarray_lab/datasets.py), and [`examples/dashboard_app.py`](examples/dashboard_app.py).
 
+## Proof At A Glance
 
+<table>
+  <tr>
+    <td width="25%"><strong>67 passing tests</strong><br />Runtime, explorer, export, transforms, CF logic, AI hooks, and SQL helpers are covered by the current suite.</td>
+    <td width="25%"><strong>29 screenshots and GIFs</strong><br />The README visuals come from the running app, not static mockups.</td>
+    <td width="25%"><strong>6 bundled datasets</strong><br />Demo, compare, multi-file, curvilinear, and real-world validation datasets are included.</td>
+    <td width="25%"><strong>Real-world validation</strong><br />ERSSTv5 is used to validate real climate workflows and query-planning behavior.</td>
+  </tr>
+</table>
 
-## Next Upstream 
+## Next Upstream PR
 
 The next upstream-ready slice should stay small and reviewable. The exact target files are:
 
