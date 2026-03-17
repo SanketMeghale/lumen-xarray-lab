@@ -11,13 +11,11 @@
 </p>
 
 <p align="center">
-  <a href="docs/architecture.md">Architecture</a> |
   <a href="docs/benchmarks.md">Benchmarks</a> |
   <a href="docs/proposal-alignment.md">Proposal Alignment</a> |
   <a href="docs/reviewer-guide.md">Reviewer Guide</a> |
   <a href="docs/upstream-plan.md">Upstream Plan</a> |
-  <a href="examples/dashboard_app.py">Dashboard App</a> |
-  <a href="assets/diagrams/xarray_source_proposal_diagram.svg">Proposal Diagram</a>
+  <a href="examples/dashboard_app.py">Dashboard App</a>
 </p>
 
 <p align="center">
@@ -64,7 +62,7 @@ then inspecting anomaly, rolling-mean, map, or table views in one place.
 > - **Goal:** prove that Lumen can support xarray datasets without losing its tabular source boundary.
 > - **Already working here:** runnable explorer, tested source/runtime adapter, CF-aware coordinate detection, multi-file loading, scientific transforms, GeoViews maps, lightweight AI assist, bounded SQL explorer, real-world ERSSTv5 validation, screenshots, GIFs, and benchmark notes.
 > - **Upstream position:** this repo is a companion prototype, not a replacement for upstream `lumen`.
-> - **Best files to inspect first:** [`docs/architecture.md`](docs/architecture.md), [`docs/proposal-alignment.md`](docs/proposal-alignment.md), [`docs/upstream-plan.md`](docs/upstream-plan.md), [`src/lumen_xarray_lab/datasets.py`](src/lumen_xarray_lab/datasets.py), and [`examples/dashboard_app.py`](examples/dashboard_app.py).
+> - **Best files to inspect first:** [`docs/proposal-alignment.md`](docs/proposal-alignment.md), [`docs/upstream-plan.md`](docs/upstream-plan.md), [`src/lumen_xarray_lab/datasets.py`](src/lumen_xarray_lab/datasets.py), and [`examples/dashboard_app.py`](examples/dashboard_app.py).
 
 ## Implemented Now And Next Plan
 
@@ -99,8 +97,8 @@ Planned scope for that PR:
 
 1. Watch the [overview recording](docs/media/overview_recording_2026-03-17.mp4).
 2. Open the main explorer at [`examples/dashboard_app.py`](examples/dashboard_app.py).
-3. Read [`docs/architecture.md`](docs/architecture.md) for the boundary between xarray and DataFrame output.
-4. Check [`docs/upstream-plan.md`](docs/upstream-plan.md) for what should move into `lumen`.
+3. Check [`docs/upstream-plan.md`](docs/upstream-plan.md) for what should move into `lumen`.
+4. Read [`docs/proposal-alignment.md`](docs/proposal-alignment.md) for the current milestone mapping.
 5. Run `pytest -q` and `panel serve examples/dashboard_app.py --show`.
 
 ## Selected Workflow Screens
@@ -259,20 +257,6 @@ bugfix in the query helper.
 | the work can be tested and documented honestly | `tests/`, `docs/benchmarks.md`, `docs/upstream-plan.md`, generated screenshots |
 | the stable core can be separated from demo-only work | fallback runtime design plus the upstream plan docs |
 
-## Architecture
-
-<p align="center">
-  <img src="assets/diagrams/xarray_source_proposal_diagram.svg" alt="Proposal architecture diagram" width="100%" />
-</p>
-
-The important boundary is simple:
-
-- xarray stays responsible for coordinate-aware selection and reduction
-- Lumen still receives stable tabular output at the source boundary
-- large scientific datasets are filtered before flattening, not after
-
-More detail lives in [`docs/architecture.md`](docs/architecture.md).
-
 ## Relationship To Upstream Lumen
 
 This lab repo is intentionally not the main implementation story.
@@ -376,28 +360,3 @@ Read the full notes here:
 
 The main takeaway is simple: filter first in xarray, flatten last, and protect
 the boundary with `max_rows`.
-
-## Useful Entry Points
-
-- [Architecture notes](docs/architecture.md)
-- [Benchmark notes](docs/benchmarks.md)
-- [Proposal alignment](docs/proposal-alignment.md)
-- [Reviewer guide](docs/reviewer-guide.md)
-- [Upstream plan](docs/upstream-plan.md)
-- [Dashboard app](examples/dashboard_app.py)
-- [Runtime/data layer](src/lumen_xarray_lab/datasets.py)
-- [CF helpers](src/lumen_xarray_lab/cf.py)
-- [Explorer UI](src/lumen_xarray_lab/dashboard/explorer.py)
-- [Proposal diagram](assets/diagrams/xarray_source_proposal_diagram.svg)
-
-## Scope Discipline
-
-This README is intentionally strict about what is real today.
-
-The goal is not to publish the longest feature list. The goal is to make the
-repository easy to trust:
-
-- every major claim maps to runnable code
-- the public demo matches the current implementation
-- benchmarks are published with caveats
-- experimental work stays labeled as experimental
