@@ -24,12 +24,52 @@
   <strong>xarray-native selection. Lumen-native integration. Proposal-ready proof.</strong>
 </p>
 
+<p align="center">
+  <a href="docs/media/overview_recording_2026-03-17.mp4">
+    <img src="assets/screenshots/dashboard_desktop.png" alt="Overview recording preview" width="100%" />
+  </a>
+</p>
+
+<p align="center">
+  <strong><a href="docs/media/overview_recording_2026-03-17.mp4">Overview Recording (MP4)</a></strong>
+</p>
+
+---
+
 > **GSoC reviewer summary**
 >
 > - **Goal:** prove that Lumen can support xarray datasets without losing its tabular source boundary.
 > - **Already working here:** runnable explorer, tested source/runtime adapter, CF-aware coordinate detection, multi-file loading, scientific transforms, GeoViews maps, lightweight AI assist, bounded SQL explorer, real-world ERSSTv5 validation, screenshots, GIFs, and benchmark notes.
 > - **Upstream position:** this repo is a companion prototype, not a replacement for upstream `lumen`.
 > - **Best files to inspect first:** [`docs/architecture.md`](docs/architecture.md), [`docs/proposal-alignment.md`](docs/proposal-alignment.md), [`docs/upstream-plan.md`](docs/upstream-plan.md), [`src/lumen_xarray_lab/datasets.py`](src/lumen_xarray_lab/datasets.py), and [`examples/dashboard_app.py`](examples/dashboard_app.py).
+
+## Proof At A Glance
+
+<table>
+  <tr>
+    <td width="25%"><strong>67 passing tests</strong><br />Runtime, explorer, export, transforms, CF logic, AI hooks, and SQL helpers are covered by the current suite.</td>
+    <td width="25%"><strong>29 screenshots and GIFs</strong><br />The README visuals come from the running app, not static mockups.</td>
+    <td width="25%"><strong>6 bundled datasets</strong><br />Demo, compare, multi-file, curvilinear, and real-world validation datasets are included.</td>
+    <td width="25%"><strong>Real-world validation</strong><br />ERSSTv5 is used to validate real climate workflows and query-planning behavior.</td>
+  </tr>
+</table>
+
+## Next Upstream PR
+
+The next upstream-ready slice should stay small and reviewable. The exact target files are:
+
+- `lumen/sources/xarray.py`
+- `lumen/tests/sources/test_xarray.py`
+- `docs/configuration/spec/sources.md`
+- `examples/xarray_air_temperature.yaml`
+- `examples/xarray_air_temperature_demo.py`
+
+Planned scope for that PR:
+
+- stabilize `XarraySource` behavior and metadata
+- land focused source tests
+- add one clear end-to-end example
+- document the supported boundary and current limits
 
 ## Mentor Quick Check
 
@@ -80,51 +120,71 @@ What is intentionally not the main story:
   </tr>
 </table>
 
+---
+
 ## Feature Tour
 
 ### 1. Explorer Overview
+
+<p align="center">
+  <img src="assets/screenshots/gallery/01_overview.png" alt="Explorer overview" width="100%" />
+</p>
 
 Dataset summary, table switching, axis controls, filter controls, and the explorer output surface are all visible in one frame.
 
 ### 2. Chart Output
 
-<img src="assets/screenshots/gallery/02_line_chart.png" alt="Line chart output" width="100%" />
+<p align="center">
+  <img src="assets/screenshots/gallery/02_line_chart.png" alt="Line chart output" width="100%" />
+</p>
 
 The default chart view shows sampled, query-aware table output as a chart without flattening the entire dataset.
 
 ### 3. Spatial Plot
 
-<img src="assets/screenshots/gallery/03_spatial_plot.png" alt="Spatial plot view" width="100%" />
+<p align="center">
+  <img src="assets/screenshots/gallery/03_spatial_plot.png" alt="Spatial plot view" width="100%" />
+</p>
 
 Latitude and longitude roles are detected and used to unlock a spatial chart mode for gridded scientific data.
 
 ### 4. Data Table
 
-<img src="assets/screenshots/gallery/04_data_table.png" alt="Data table view" width="100%" />
+<p align="center">
+  <img src="assets/screenshots/gallery/04_data_table.png" alt="Data table view" width="100%" />
+</p>
 
 The `Data` tab exposes the current sampled selection as a readable table for quick inspection and validation.
 
 ### 5. Statistics
 
-<img src="assets/screenshots/gallery/05_statistics.png" alt="Statistics panel" width="100%" />
+<p align="center">
+  <img src="assets/screenshots/gallery/05_statistics.png" alt="Statistics panel" width="100%" />
+</p>
 
 The `Statistics` tab summarizes nulls, unique counts, ranges, and numeric aggregates for the current selection.
 
 ### 6. Compare Variables
 
-<img src="assets/screenshots/gallery/06_compare.png" alt="Compare view" width="100%" />
+<p align="center">
+  <img src="assets/screenshots/gallery/06_compare.png" alt="Compare view" width="100%" />
+</p>
 
 The compare workflow aligns two variables on shared coordinates and surfaces joined rows plus difference and ratio metrics.
 
 ### 7. Pseudo SQL
 
-<img src="assets/screenshots/gallery/09_pseudo_sql.png" alt="Pseudo SQL view" width="100%" />
+<p align="center">
+  <img src="assets/screenshots/gallery/09_pseudo_sql.png" alt="Pseudo SQL view" width="100%" />
+</p>
 
 Pseudo SQL gives reviewers a familiar table-style mental model for the current selection and row limit.
 
 ### 8. Time Analysis
 
-<img src="assets/screenshots/gallery/10_time_analysis.png" alt="Time analysis view" width="100%" />
+<p align="center">
+  <img src="assets/screenshots/gallery/10_time_analysis.png" alt="Time analysis view" width="100%" />
+</p>
 
 The `Time Analysis` tab adds a more scientific workflow: aggregate over non-time dimensions, switch between raw, rolling mean, anomaly, cumulative, and trend views, and inspect the resulting time series directly.
 
@@ -138,31 +198,41 @@ The query-planning card shows estimated full rows, approximate DataFrame size, r
 
 ### 10. Rolling Mean Transform
 
-<img src="assets/screenshots/gallery/14_transform_rolling_mean.png" alt="Rolling mean transform" width="100%" />
+<p align="center">
+  <img src="assets/screenshots/gallery/14_transform_rolling_mean.png" alt="Rolling mean transform" width="100%" />
+</p>
 
 The transform surface keeps the computation inside xarray, then exposes a reduced view for explorer output instead of flattening the full dataset first.
 
 ### 11. Anomaly Transform
 
-<img src="assets/screenshots/gallery/15_transform_anomaly.png" alt="Anomaly transform" width="100%" />
+<p align="center">
+  <img src="assets/screenshots/gallery/15_transform_anomaly.png" alt="Anomaly transform" width="100%" />
+</p>
 
 Anomaly mode makes time-series deviations easy to inspect on real climate data without leaving the explorer.
 
 ### 12. Resample Transform
 
-<img src="assets/screenshots/gallery/16_transform_resample.png" alt="Resample transform" width="100%" />
+<p align="center">
+  <img src="assets/screenshots/gallery/16_transform_resample.png" alt="Resample transform" width="100%" />
+</p>
 
 Resampling demonstrates a practical upstream-friendly scientific transform: temporal aggregation in xarray, preview in Lumen-style UI.
 
 ### 13. Spatial Mean Transform
 
-<img src="assets/screenshots/gallery/18_transform_spatial_mean.png" alt="Spatial mean transform" width="100%" />
+<p align="center">
+  <img src="assets/screenshots/gallery/18_transform_spatial_mean.png" alt="Spatial mean transform" width="100%" />
+</p>
 
 Spatial-mean reduction collapses latitude and longitude before preview, which is exactly the type of scientific reduction that should happen before DataFrame materialization.
 
 ### 14. GeoViews Map
 
-<img src="assets/screenshots/gallery/20_geoviews_map.png" alt="GeoViews curvilinear map" width="100%" />
+<p align="center">
+  <img src="assets/screenshots/gallery/20_geoviews_map.png" alt="GeoViews curvilinear map" width="100%" />
+</p>
 
 GeoViews map mode adds a more scientific map surface with coastlines and curvilinear-grid rendering, which is a visibly stronger scientific-data story than a generic scatter plot.
 
@@ -176,9 +246,13 @@ The AI assist surface stays intentionally lightweight: dataset-aware prompt sugg
 
 ### 16. SQL Explorer
 
-<img src="assets/screenshots/gallery/23_sql_explorer.png" alt="SQL explorer tab" width="100%" />
+<p align="center">
+  <img src="assets/screenshots/gallery/23_sql_explorer.png" alt="SQL explorer tab" width="100%" />
+</p>
 
 The SQL explorer is intentionally lightweight: it runs bounded `SELECT` queries over preview-sized DataFrames so reviewers can inspect table logic without pretending the lab already has a production SQL backend.
+
+---
 
 ## Real-World Validation: NOAA ERSSTv5
 
@@ -215,9 +289,13 @@ This validation pass matters because it exercises a real monthly climate dataset
 
 ### Architecture Diagram
 
-<img src="assets/diagrams/xarray_source_proposal_diagram.svg" alt="Proposal architecture diagram" width="100%" />
+<p align="center">
+  <img src="assets/diagrams/xarray_source_proposal_diagram.svg" alt="Proposal architecture diagram" width="100%" />
+</p>
 
 The repo also includes proposal-ready visuals explaining how xarray selection stays upstream of the DataFrame boundary.
+
+---
 
 ## Why This Repo Exists
 
@@ -312,3 +390,171 @@ Install the project in editable mode:
 
 ```bash
 pip install -e .[test]
+```
+
+Install the richer scientific demo stack if you want GeoViews maps and media export:
+
+```bash
+pip install -e .[demo,test]
+```
+
+Run the main examples:
+
+```bash
+python examples/quickstart.py
+python examples/air_temperature_demo.py
+python examples/ai_upload_demo.py
+python examples/sql_explorer_demo.py
+```
+
+Launch the explorer:
+
+```bash
+panel serve examples/dashboard_app.py --show
+```
+
+Preload a dataset at startup if you want:
+
+```bash
+panel serve examples/dashboard_app.py --show --args "C:\path\to\dataset.nc"
+```
+
+Inside the dashboard you can:
+
+- load a local `.nc` file path
+- load a local `.zarr` directory path
+- open a bundled sample dataset
+- upload a single NetCDF/HDF file into the session
+
+Run the test suite:
+
+```bash
+pytest -q
+```
+
+## Bundled Sample Datasets
+
+The repo includes small local datasets for reliable demos:
+
+- `assets/sample_data/air_temperature.nc`
+- `assets/sample_data/rasm.nc`
+- `assets/sample_data/ersstv5.nc`
+- `assets/sample_data/compare_weather.nc`
+- `assets/sample_data/curvilinear_rasm_demo.nc`
+- `assets/sample_data/multi_air_temperature/*.nc`
+
+Recommended demo order:
+
+1. `air_temperature` for a clean first walkthrough
+2. `multi_air_temperature` for split-file loading
+3. `compare_weather` for the compare panel
+4. `curvilinear_rasm_demo` for CF metadata and GeoViews maps
+5. `ersstv5` for a heavier real-world climate-style dataset
+6. `rasm` for the full curvilinear source file behind the smaller demo subset
+
+## Benchmarks And Limits
+
+The benchmark story in this repo is intentionally conservative.
+
+Current published results:
+
+- medium `time x lat x lon` selection estimate: `3,869,000` flattened rows
+- rough 4-column DataFrame estimate for that selection: about `118.07 MB`
+- large climate-style grid estimate: `378,957,600` rows and about `11.29 GB`
+- local NetCDF open timing for the small demo dataset: `0.3703 s`
+- split multi-file sample open timing: `1.4488 s` vs `0.5291 s` for the single-file baseline
+- ERSSTv5 transform timings: rolling mean `1.7886 s`, anomaly `0.2499 s`, resample `0.2403 s`, climatology `0.1266 s`, spatial mean `0.0933 s`, zonal mean `0.0785 s`
+
+Read the full notes here:
+
+- [Benchmark notes](docs/benchmarks.md)
+- [flattening_vs_sql.json](benchmarks/results/flattening_vs_sql.json)
+- [netcdf_vs_zarr.json](benchmarks/results/netcdf_vs_zarr.json)
+- [large_grid_limits.json](benchmarks/results/large_grid_limits.json)
+- [multifile_loading.json](benchmarks/results/multifile_loading.json)
+- [transform_timings.json](benchmarks/results/transform_timings.json)
+
+The main takeaway is simple: filter first in xarray, flatten last, and protect the boundary with `max_rows`.
+
+## Media Pipeline
+
+Export the dashboard snapshot only:
+
+```bash
+python scripts/make_screenshots.py --html-only
+```
+
+Capture the full media set:
+
+```bash
+pip install -e .[demo]
+python -m playwright install chromium
+python scripts/make_screenshots.py
+python scripts/make_gif.py
+```
+
+Generated assets:
+
+- `assets/screenshots/dashboard_desktop.png`
+- `assets/screenshots/dashboard_mobile.png`
+- `assets/screenshots/gallery/*.png`
+- `assets/screenshots/real_world/*.png`
+- `docs/screenshots/story_frames/*.png`
+- `docs/gifs/dashboard_walkthrough.gif`
+
+The gallery and real-world screenshots used in this README are exported from the app itself so the repository visuals stay aligned with the current implementation.
+
+## Repository Layout
+
+```text
+lumen-xarray-lab/
+|- README.md
+|- docs/
+|- src/lumen_xarray_lab/
+|- examples/
+|- benchmarks/
+|- scripts/
+|- tests/
+`- assets/
+```
+
+## Useful Entry Points
+
+- [Architecture notes](docs/architecture.md)
+- [Benchmark notes](docs/benchmarks.md)
+- [Roadmap](docs/roadmap.md)
+- [Upstream plan](docs/upstream-plan.md)
+- [Dashboard app](examples/dashboard_app.py)
+- [Runtime/data layer](src/lumen_xarray_lab/datasets.py)
+- [CF helpers](src/lumen_xarray_lab/cf.py)
+- [Explorer UI](src/lumen_xarray_lab/dashboard/explorer.py)
+- [Proposal diagram](assets/diagrams/xarray_source_proposal_diagram.svg)
+
+## Relationship To Upstream Lumen
+
+This lab repo is intentionally not the main implementation story.
+
+The core contribution should still land in upstream `lumen` through:
+
+- `XarraySource`
+- tests
+- docs
+- runnable examples
+
+The lab repo is where the surrounding proof lives:
+
+- screenshots and GIFs
+- benchmark notes
+- demo-first explorer workflow
+- experimental features that are not yet ready to merge upstream
+
+## Scope Discipline
+
+This README is intentionally strict about what is real today.
+
+The goal is not to publish the longest feature list. The goal is to make the repository easy to trust:
+
+- every major claim maps to runnable code
+- the public demo matches the current implementation
+- benchmarks are published with caveats
+- experimental work stays labeled as experimental
