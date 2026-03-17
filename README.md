@@ -5,9 +5,10 @@
 </p>
 
 <p align="center">
-  <a href="docs/architecture.md">Architecture</a> &middot;
-  <a href="docs/upstream-plan.md">Upstream Plan</a> &middot;
-  <a href="examples/dashboard_app.py">Dashboard App</a> &middot;
+  <a href="docs/architecture.md">Architecture</a> |
+  <a href="docs/benchmarks.md">Benchmarks</a> |
+  <a href="docs/upstream-plan.md">Upstream Plan</a> |
+  <a href="examples/dashboard_app.py">Dashboard App</a> |
   <a href="assets/diagrams/xarray_source_proposal_diagram.svg">Proposal Diagram</a>
 </p>
 
@@ -16,67 +17,100 @@
 
 <table>
   <tr>
-    <td width="76%">
+    <td width="72%">
       <img src="assets/screenshots/dashboard_desktop.png" alt="Desktop explorer dashboard" />
     </td>
-    <td width="24%">
+    <td width="28%">
       <img src="assets/screenshots/dashboard_mobile.png" alt="Mobile explorer dashboard" />
     </td>
   </tr>
   <tr>
-    <td><strong>Desktop:</strong> overview, dataset summary, explorer controls, and query-aware output.</td>
-    <td><strong>Mobile:</strong> the same dashboard rendered in a narrower layout.</td>
+    <td><strong>Desktop:</strong> Explorer-style surface with dataset loading, coordinate-aware filters, query previews, and chart output.</td>
+    <td><strong>Mobile:</strong> Same workflow rendered in a narrower layout for proposal screenshots and quick validation.</td>
   </tr>
 </table>
 
+## Why This Repo Exists
+
+Lumen is built around tabular sources. xarray datasets are labeled, multidimensional, and coordinate-aware.
+
+This lab exists to prove that those two models can meet cleanly:
+
+- xarray stays responsible for coordinate-aware selection
+- Lumen still receives stable DataFrame outputs at the boundary
+- schema, metadata, and coordinate roles remain visible to the user
+- interactive dashboards do not blindly flatten large scientific datasets
+
+This repository is not meant to replace upstream `lumen`. It is a companion repo for:
+
+- demos and screenshots
+- proposal evidence
+- benchmark notes
+- experiments that are useful but not yet upstream-ready
+
 ## What This Repo Proves
 
-- xarray-backed datasets can be surfaced through an Explorer-style Lumen workflow.
-- Queryable coordinates, schema hints, and preview tables can be generated from real datasets.
-- Spatial views, comparison on shared coordinates, and selection-level statistics can be driven from the same explorer.
-- The implementation can stay isolated here while stable pieces move upstream into `lumen`.
-- The demo story is backed by runnable examples, tests, screenshots, and a walkthrough GIF.
+| Proposal claim | Evidence in this repo |
+|---|---|
+| xarray-backed datasets can be explored through a Lumen-style workflow | `examples/dashboard_app.py`, Explorer UI, screenshots, GIF |
+| coordinate-aware filtering can happen before flattening | `src/lumen_xarray_lab/datasets.py`, explorer query flow |
+| schema, metadata, and coordinate roles can be surfaced in the UI | explorer summary panels, coordinate tables, CF helpers |
+| the feature can be tested and documented honestly | `tests/`, `docs/benchmarks.md`, `docs/upstream-plan.md` |
+| the work can be split into demo-only vs upstream-ready pieces | fallback runtime design plus upstream-plan doc |
 
-## Current Scope
+## Feature Overview
 
-Implemented:
+### Implemented now
 
-- explorer-style dashboard with table switching, dimension filters, spatial plots, comparison views, statistics, coverage, export, and query previews
-- example scripts for quickstart, upload preview flow, and SQL experiment status
-- CF-style coordinate detection helpers
-- schema enrichment helpers
-- benchmark utility functions and scripts
-- test suite covering the current lab surface
+- Explorer-style dashboard with in-app dataset loading
+- local path, URI, bundled sample, and upload-based dataset loading
+- table switching across xarray `data_vars`
+- coordinate-aware filters derived from queryable 1D coordinates
+- line, scatter, bar, histogram, and spatial chart modes
+- statistics, coverage, comparison, and export panels
+- source query and pseudo-SQL preview
+- coordinate-role detection for `time`, `latitude`, `longitude`, and `vertical`
+- schema enrichment and runtime/source diagnostics
+- benchmark scripts plus published local benchmark outputs
+- screenshot and GIF capture flow for proposal/demo assets
 
-Still experimental:
+### Deliberately still experimental
 
-- AI upload integration beyond simple previews
 - SQL-backed xarray access
-- broader benchmark coverage across larger datasets and machines
-- upstream extraction of stable lab features
+- richer AI upload integration beyond simple previews
+- broader benchmark publication across multiple environments
+- any claim that depends on unimplemented SQL or distributed execution paths
 
-## Runtime Design
+## Explorer Highlights
+
+- `Load Dataset` sidebar lets you switch datasets without restarting the app.
+- `Bundled sample` is the fastest way to demo the explorer.
+- `Source Query` shows the source-level call shape for the current selection.
+- `Pseudo SQL` gives a familiar mental model for reviewers who think in SQL first.
+- `Compare` works when the loaded dataset has multiple variables on shared coordinates.
+- `Spatial` view uses detected latitude and longitude columns when available.
+
+## Runtime Model
 
 The lab runs in two modes:
 
-1. If a sibling `lumen` checkout exposing `lumen.sources.xarray.XarraySource` exists, the lab uses it.
-2. Otherwise, the lab falls back to a local `LabXarraySourceAdapter` that implements the subset required for demos and tests.
+1. If a sibling `lumen` checkout exposes `lumen.sources.xarray.XarraySource`, the lab uses it.
+2. Otherwise, it falls back to a local `LabXarraySourceAdapter` so demos and tests still work in isolation.
 
-That gives you:
+That gives this repo two useful properties:
 
-- an isolated repo for proposal demos and experiments
-- a stable fallback while upstream work is still evolving
-- a clean path from lab code to upstream PRs
+- it stays runnable as a standalone public demo repo
+- it still acts as a realistic proving ground for upstream xarray source work
 
 ## Quick Start
 
-Install in editable mode:
+Install the project in editable mode:
 
 ```bash
 pip install -e .[test]
 ```
 
-Run the examples:
+Run the main examples:
 
 ```bash
 python examples/quickstart.py
@@ -85,7 +119,7 @@ python examples/ai_upload_demo.py
 python examples/sql_explorer_demo.py
 ```
 
-Launch the dashboard:
+Launch the explorer:
 
 ```bash
 panel serve examples/dashboard_app.py --show
@@ -97,28 +131,64 @@ Preload a dataset at startup if you want:
 panel serve examples/dashboard_app.py --show --args "C:\path\to\dataset.nc"
 ```
 
-Inside the dashboard, use the `Load Dataset` card in the sidebar to:
+Inside the dashboard you can:
 
-- open a local file path or URI without restarting the server
-- load a bundled sample such as `air_temperature`, `rasm`, `ersstv5`, or `compare_weather`
-- point the explorer at a local `.zarr` directory
-- upload a single NetCDF/HDF file into the current session
+- load a local `.nc` file path
+- load a local `.zarr` directory path
+- open a bundled sample dataset
+- upload a single NetCDF/HDF file into the session
 
-Run the tests:
+Run the test suite:
 
 ```bash
 pytest -q
 ```
 
+## Bundled Sample Datasets
+
+The repo includes small local datasets for reliable demos:
+
+- `assets/sample_data/air_temperature.nc`
+- `assets/sample_data/rasm.nc`
+- `assets/sample_data/ersstv5.nc`
+- `assets/sample_data/compare_weather.nc`
+
+Recommended demo order:
+
+1. `air_temperature` for a clean first walkthrough
+2. `rasm` for coordinate-role detection on less obvious dimensions
+3. `compare_weather` for the compare panel
+4. `ersstv5` for a heavier real-world climate-style dataset
+
+## Benchmarks And Limits
+
+The benchmark story in this repo is intentionally conservative.
+
+Current published results:
+
+- medium `time x lat x lon` selection estimate: `3,869,000` flattened rows
+- rough 4-column DataFrame estimate for that selection: about `118.07 MB`
+- large climate-style grid estimate: `378,957,600` rows and about `11.29 GB`
+- local NetCDF open timing for the small demo dataset: `0.3703 s`
+
+Read the full notes here:
+
+- [Benchmark notes](docs/benchmarks.md)
+- [flattening_vs_sql.json](benchmarks/results/flattening_vs_sql.json)
+- [netcdf_vs_zarr.json](benchmarks/results/netcdf_vs_zarr.json)
+- [large_grid_limits.json](benchmarks/results/large_grid_limits.json)
+
+The main takeaway is simple: filter first in xarray, flatten last, and protect the boundary with `max_rows`.
+
 ## Media Pipeline
 
-Export the static dashboard snapshot:
+Export the dashboard snapshot only:
 
 ```bash
 python scripts/make_screenshots.py --html-only
 ```
 
-Install the demo extras and capture the full media set:
+Capture the full media set:
 
 ```bash
 pip install -e .[demo]
@@ -127,7 +197,7 @@ python scripts/make_screenshots.py
 python scripts/make_gif.py
 ```
 
-The capture flow now generates:
+Generated assets:
 
 - `assets/screenshots/dashboard_desktop.png`
 - `assets/screenshots/dashboard_mobile.png`
@@ -150,20 +220,41 @@ lumen-xarray-lab/
 
 ## Useful Entry Points
 
-- [Project metadata](pyproject.toml)
 - [Architecture notes](docs/architecture.md)
-- [Roadmap](docs/roadmap.md)
 - [Benchmark notes](docs/benchmarks.md)
+- [Roadmap](docs/roadmap.md)
 - [Upstream plan](docs/upstream-plan.md)
 - [Dashboard app](examples/dashboard_app.py)
-- [Source/runtime layer](src/lumen_xarray_lab/datasets.py)
+- [Runtime/data layer](src/lumen_xarray_lab/datasets.py)
+- [CF helpers](src/lumen_xarray_lab/cf.py)
+- [Explorer UI](src/lumen_xarray_lab/dashboard/explorer.py)
 - [Proposal diagram](assets/diagrams/xarray_source_proposal_diagram.svg)
 
-## Proposal Positioning
+## Relationship To Upstream Lumen
 
-This repo is meant to support an upstream-friendly proposal story:
+This lab repo is intentionally not the main implementation story.
 
-- honest implemented-vs-planned boundaries
-- working examples and tests for every shipped claim
-- clear upstream migration path
-- isolated experimentation without polluting core Lumen work
+The core contribution should still land in upstream `lumen` through:
+
+- `XarraySource`
+- tests
+- docs
+- runnable examples
+
+The lab repo is where the surrounding proof lives:
+
+- screenshots and GIFs
+- benchmark notes
+- demo-first explorer workflow
+- experimental features that are not yet ready to merge upstream
+
+## Scope Discipline
+
+This README is intentionally strict about what is real today.
+
+The goal is not to publish the longest feature list. The goal is to make the repository easy to trust:
+
+- every major claim maps to runnable code
+- the public demo matches the current implementation
+- benchmarks are published with caveats
+- experimental work stays labeled as experimental
