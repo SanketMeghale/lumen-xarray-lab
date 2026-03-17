@@ -92,9 +92,6 @@ If you want the proposal-to-prototype mapping, start with [`docs/proposal-alignm
 
 ## Preview
 
-<p align="center">
-  <img src="docs/gifs/dashboard_walkthrough.gif" alt="Explorer walkthrough GIF" width="100%" />
-</p>
 
 The GIF below is meant to answer the reviewer question quickly: does the prototype already behave like a usable xarray-backed explorer, or is it still a concept? This repo is structured so the answer is visible before reading any code.
 
