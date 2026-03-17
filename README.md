@@ -24,8 +24,6 @@
   <strong>xarray-native selection. Lumen-native integration. Proposal-ready proof.</strong>
 </p>
 
----
-
 > **GSoC reviewer summary**
 >
 > - **Goal:** prove that Lumen can support xarray datasets without losing its tabular source boundary.
@@ -37,7 +35,7 @@
 
 If a mentor wants to evaluate the prototype fast, these are the highest-signal checks:
 
-1. Open the GIF and screenshot gallery to verify the explorer is already usable.
+1. Open the screenshot gallery and the explorer demo.
 2. Read [`docs/proposal-alignment.md`](docs/proposal-alignment.md) to see how the current repo maps to the proposal milestones.
 3. Read [`docs/architecture.md`](docs/architecture.md) to confirm the xarray-to-DataFrame boundary is explicit.
 4. Inspect [`src/lumen_xarray_lab/datasets.py`](src/lumen_xarray_lab/datasets.py) and [`src/lumen_xarray_lab/cf.py`](src/lumen_xarray_lab/cf.py) for the core runtime and coordinate-role logic.
@@ -67,8 +65,6 @@ What is intentionally not the main story:
 - claiming distributed execution or SQL support as finished work
 - treating the lab repo as the core implementation instead of proposal evidence
 
-The GIF below is meant to answer the reviewer question quickly: does the prototype already behave like a usable xarray-backed explorer, or is it still a concept? This repo is structured so the answer is visible before reading any code.
-
 <table>
   <tr>
     <td width="72%">
@@ -84,14 +80,11 @@ The GIF below is meant to answer the reviewer question quickly: does the prototy
   </tr>
 </table>
 
----
-
 ## Feature Tour
-
-Every image below is generated from the dashboard itself through the scripted capture flow.
 
 ### 1. Explorer Overview
 
+<img src="assets/screenshots/gallery/01_overview.png" alt="Explorer overview" width="100%" />
 
 Dataset summary, table switching, axis controls, filter controls, and the explorer output surface are all visible in one frame.
 
@@ -135,7 +128,7 @@ Pseudo SQL gives reviewers a familiar table-style mental model for the current s
 
 <img src="assets/screenshots/gallery/10_time_analysis.png" alt="Time analysis view" width="100%" />
 
-The new `Time Analysis` tab adds a more scientific workflow: aggregate over non-time dimensions, switch between raw, rolling mean, anomaly, cumulative, and trend views, and inspect the resulting time series directly.
+The `Time Analysis` tab adds a more scientific workflow: aggregate over non-time dimensions, switch between raw, rolling mean, anomaly, cumulative, and trend views, and inspect the resulting time series directly.
 
 ### 9. Query Planning
 
@@ -156,31 +149,26 @@ The transform surface keeps the computation inside xarray, then exposes a reduce
 <img src="assets/screenshots/gallery/15_transform_anomaly.png" alt="Anomaly transform" width="100%" />
 
 Anomaly mode makes time-series deviations easy to inspect on real climate data without leaving the explorer.
-### 12. SQL Explorer
 
-<img src="assets/screenshots/gallery/23_sql_explorer.png" alt="SQL explorer tab" width="100%" />
-
-The SQL explorer is also intentionally lightweight: it runs bounded `SELECT` queries over preview-sized DataFrames so reviewers can inspect table logic without pretending the lab already has a production SQL backend.
-
-### 13. Resample Transform
+### 12. Resample Transform
 
 <img src="assets/screenshots/gallery/16_transform_resample.png" alt="Resample transform" width="100%" />
 
 Resampling demonstrates a practical upstream-friendly scientific transform: temporal aggregation in xarray, preview in Lumen-style UI.
 
-### 14. Spatial Mean Transform
+### 13. Spatial Mean Transform
 
 <img src="assets/screenshots/gallery/18_transform_spatial_mean.png" alt="Spatial mean transform" width="100%" />
 
 Spatial-mean reduction collapses latitude and longitude before preview, which is exactly the type of scientific reduction that should happen before DataFrame materialization.
 
-### 15. GeoViews Map
+### 14. GeoViews Map
 
 <img src="assets/screenshots/gallery/20_geoviews_map.png" alt="GeoViews curvilinear map" width="100%" />
 
 GeoViews map mode adds a more scientific map surface with coastlines and curvilinear-grid rendering, which is a visibly stronger scientific-data story than a generic scatter plot.
 
-### 16. AI Assist
+### 15. AI Assist
 
 <p align="center">
   <img src="assets/screenshots/gallery/22_ai_assist.png" alt="AI assist card" width="42%" />
@@ -188,11 +176,16 @@ GeoViews map mode adds a more scientific map surface with coastlines and curvili
 
 The AI assist surface stays intentionally lightweight: dataset-aware prompt suggestions, capability hints, and transform recommendations derived directly from detected coordinates and available tables.
 
+### 16. SQL Explorer
 
+<img src="assets/screenshots/gallery/23_sql_explorer.png" alt="SQL explorer tab" width="100%" />
+
+The SQL explorer is intentionally lightweight: it runs bounded `SELECT` queries over preview-sized DataFrames so reviewers can inspect table logic without pretending the lab already has a production SQL backend.
 
 ## Real-World Validation: NOAA ERSSTv5
 
 The screenshots below come from the bundled NOAA ERSSTv5 sea-surface-temperature dataset at `assets/sample_data/ersstv5.nc`.
+
 This validation pass matters because it exercises a real monthly climate dataset with `time`, `lat`, and `lon` coordinates, a nearly 10 million-row full flattening surface, and descending latitude coordinates that forced a real bugfix in the query helper.
 
 <table>
